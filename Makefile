@@ -19,7 +19,7 @@ build: clean increment_version
 	python -m build 
 
 install: build
-	pip install -q dist/*.whl --force-reinstall
+	pip install dist/*.whl --force-reinstall --no-dependencies
 
 clean: uninstall
 	npm run clean || true
