@@ -1,7 +1,5 @@
 # jupyterlab_zip_extension
 
-[![Github Actions Status](/workflows/Build/badge.svg)](/.github/workflows/build.yml)
-
 Jupyterlab extension that adds archive zip / unzip capabilities to File Browser
 
 This extension is composed of a Python package named `jupyterlab_zip_extension`
