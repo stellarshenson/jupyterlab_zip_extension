@@ -4,7 +4,7 @@ import { ServerConnection } from '@jupyterlab/services';
 /**
  * Call the API extension
  */
-export async function callUnzipAPI<T>(
+export async function callZipAPI<T>(
   endPoint = '',
   init: RequestInit = {}
 ): Promise<T> {

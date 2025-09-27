@@ -39,6 +39,7 @@ exclude = [".github", "binder"]
 [tool.hatch.build.targets.wheel.shared-data]
 "jupyterlab_zip_extension/labextension" = "share/jupyter/labextensions/jupyterlab_zip"
 "install.json" = "share/jupyter/labextensions/jupyterlab_zip/install.json"
+"jupyterlab_zip.json" = "etc/jupyter/jupyter_server_config.d/jupyterlab_zip.json"
 
 [tool.hatch.build.hooks.version]
 path = "jupyterlab_zip_extension/_version.py"
