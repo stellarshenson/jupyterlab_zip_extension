@@ -38,5 +38,4 @@ install_dependencies:
 
 mrproper: clean uninstall
 	rm -rf node_modules .yarn || true
-	rm package-lock.json yarn.lock
 
