@@ -1,7 +1,7 @@
 {
-  "name": "jupyterlab_zip-ui-tests",
+  "name": "jupyterlab_zip_extension-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab jupyterlab_zip Integration Tests",
+  "description": "JupyterLab jupyterlab_zip_extension Integration Tests",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

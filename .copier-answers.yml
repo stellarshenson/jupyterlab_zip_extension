@@ -5,10 +5,11 @@ author_email: konrad.jelen@gmail.com
 author_name: Stellars Henson
 has_binder: false
 has_settings: false
-kind: frontend
-labextension_name: jupyterlab_unzip
-project_short_description: Unzip files in navigator
-python_name: jupyterlab_unzip_extension
+kind: frontend-and-server
+labextension_name: jupyterlab_zip_extension
+project_short_description: Jupyterlab extension that adds archive zip / unzip capabilities
+    to File Browser
+python_name: jupyterlab_zip_extension
 repository: ''
 test: true
 
