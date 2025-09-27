@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab_zip",
-    "version": "0.4.29",
+    "version": "0.4.31",
     "description": "Jupyterlab extension to allow archiving and unarchiving files in the File Browser",
     "keywords": [
         "jupyter",

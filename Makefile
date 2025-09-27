@@ -1,9 +1,9 @@
-.PHONY: build install clean uninstall publish dependencies mrproper increment-version
+.PHONY: build install clean uninstall publish dependencies mrproper increment_version install_dependencies
 
 # Read current version from package.json
 VERSION := $(shell node -p "require('./package.json').version")
 
-increment-version:
+increment_version:
 	@echo "Current version: $(VERSION)"
 	@bash -c 'CURRENT_VERSION=$(VERSION); \
 	IFS="." read -r major minor patch <<< "$$CURRENT_VERSION"; \
@@ -13,7 +13,7 @@ increment-version:
 	sed -i "s/\"version\": \"$$CURRENT_VERSION\"/\"version\": \"$$NEW_VERSION\"/" package.json; \
 	echo "Version bumped to $$NEW_VERSION"'
 
-build: clean increment-version
+build: clean increment_version
 	npm install
 	yarn install
 	python -m build 
@@ -32,7 +32,7 @@ uninstall:
 publish: install
 	twine upload dist/*
 
-install-dependencies:
+install_dependencies:
 	conda install -y nodejs yarn --update-all
 	pip install twine
 
