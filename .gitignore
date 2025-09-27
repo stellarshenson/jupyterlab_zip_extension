@@ -123,3 +123,8 @@ dmypy.json
 
 # Yarn cache
 .yarn/
+
+yarn.lock
+package-lock.json
+
+# EOF
