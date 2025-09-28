@@ -6,6 +6,11 @@ This extension is composed of a Python package named `jupyterlab_zip_extension`
 for the server extension and a NPM package named `jupyterlab_zip_extension`
 for the frontend extension.
 
+![](./.resources/jupyterlab_zip_1.png)
+![](./.resources/jupyterlab_zip_2.png)
+![](./.resources/jupyterlab_zip_3.png)
+
+
 ## Requirements
 
 - JupyterLab >= 4.0.0
