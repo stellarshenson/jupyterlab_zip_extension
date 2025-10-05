@@ -1,5 +1,7 @@
 # jupyterlab_zip_extension
 
+[![PyPI version](https://badge.fury.io/py/jupyterlab-zip-extension.svg)](https://badge.fury.io/py/jupyterlab-zip-extension)
+
 Jupyterlab extension that adds archive zip / unzip capabilities to File Browser
 
 This extension is composed of a Python package named `jupyterlab_zip_extension`
