@@ -1,6 +1,6 @@
 {
     "name": "jupyterlab_zip_extension",
-    "version": "1.0.1",
+    "version": "1.0.3",
     "description": "Jupyterlab extension that adds archive zip / unzip capabilities to File Browser",
     "keywords": [
         "jupyter",
