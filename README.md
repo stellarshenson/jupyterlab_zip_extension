@@ -3,7 +3,7 @@
 ![GitHub Actions](https://github.com/stellarshenson/jupyterlab_zip_extension/actions/workflows/build.yml/badge.svg)
 [![npm version](https://badge.fury.io/js/jupyterlab_zip_extension.svg)](https://www.npmjs.com/package/jupyterlab_zip_extension)
 [![PyPI version](https://badge.fury.io/py/jupyterlab-zip-extension.svg)](https://pypi.org/project/jupyterlab-zip-extension/)
-![PyPI downloads](https://img.shields.io/pypi/dm/jupyterlab-zip-extension?label=PyPI%20downloads)
+[![Total PyPI downloads](https://static.pepy.tech/badge/jupyterlab-zip-extension)](https://pepy.tech/project/jupyterlab-zip-extension)
 ![JL4 Ready](https://img.shields.io/badge/Jupyterlab%204-ready-blue)
 
 Jupyterlab extension that adds archive zip / unzip capabilities to File Browser
