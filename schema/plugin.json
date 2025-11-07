@@ -1,0 +1,16 @@
+{
+  "jupyter.lab.setting-icon": "ui-components:archive",
+  "jupyter.lab.setting-icon-label": "Zip Extension",
+  "title": "Zip Extension Settings",
+  "description": "Configure archive extraction behavior",
+  "type": "object",
+  "properties": {
+    "extractToNamedFolder": {
+      "type": "boolean",
+      "title": "Extract to Named Folder",
+      "description": "If enabled, extracts to a folder named after the archive file. If disabled, extracts directly to the current directory.",
+      "default": true
+    }
+  },
+  "additionalProperties": false
+}

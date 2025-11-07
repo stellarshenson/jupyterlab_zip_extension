@@ -17,29 +17,36 @@ class UnzipHandler(APIHandler):
         try:
             input_data = self.get_json_body()
             archive_path = input_data.get('archive_path')
+            extract_to_named_folder = input_data.get('extract_to_named_folder', True)
             self.log.info(f"[UNZIP] Called with params: {input_data}")
-            
+
             if not archive_path:
                 self.set_status(400)
                 self.finish(json.dumps({"success": False, "error": "No archive path provided"}))
                 return
-                
+
             root_dir = os.path.expanduser(self.settings['server_root_dir'])
             self.log.debug(f"[UNZIP] Root dir: {root_dir}")
-            
+
             full_archive_path = os.path.join(root_dir, archive_path)
             full_archive_path = os.path.expanduser(full_archive_path)
             self.log.debug(f"[UNZIP] Full archive path: {full_archive_path}")
-            
+
             if not os.path.exists(full_archive_path):
                 self.log.error(f"[UNZIP] Archive not found: {full_archive_path}")
                 self.set_status(404)
                 self.finish(json.dumps({"success": False, "error": "Archive not found"}))
                 return
-                
-            archive_name = Path(archive_path).stem
-            extract_dir = os.path.join(os.path.dirname(full_archive_path), f"{archive_name}_extracted")
-            self.log.debug(f"[UNZIP] Extracting to: {extract_dir}")
+
+            archive_dir = os.path.dirname(full_archive_path)
+
+            if extract_to_named_folder:
+                archive_name = Path(archive_path).stem
+                extract_dir = os.path.join(archive_dir, archive_name)
+                self.log.debug(f"[UNZIP] Extracting to named folder: {extract_dir}")
+            else:
+                extract_dir = archive_dir
+                self.log.debug(f"[UNZIP] Extracting to current directory: {extract_dir}")
             
             with zipfile.ZipFile(full_archive_path, 'r') as zip_ref:
                 zip_ref.extractall(extract_dir)

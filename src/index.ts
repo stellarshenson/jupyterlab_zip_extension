@@ -5,9 +5,10 @@ import {
 
 import { ICommandPalette, InputDialog } from '@jupyterlab/apputils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { callZipAPI } from './handler';
 
-const PLUGIN_ID = 'jupyterlab-zip-extension:plugin';
+const PLUGIN_ID = 'jupyterlab_zip_extension:plugin';
 const UNZIP_COMMAND = 'filebrowser:unzip-file';
 const ZIP_COMMAND = 'filebrowser:zip-files';
 
@@ -16,16 +17,37 @@ const plugin: JupyterFrontEndPlugin<void> = {
   description: 'A JupyterLab extension to zip/unzip files in the file browser.',
   autoStart: true,
   requires: [IFileBrowserFactory],
-  optional: [ICommandPalette],
+  optional: [ICommandPalette, ISettingRegistry],
   activate: (
     app: JupyterFrontEnd,
     factory: IFileBrowserFactory,
-    palette: ICommandPalette | null
+    palette: ICommandPalette | null,
+    settingRegistry: ISettingRegistry | null
   ): void => {
     console.log('JupyterLab Zip/Unzip Extension is activated!');
 
     const { commands } = app;
     const { tracker } = factory;
+
+    let extractToNamedFolder = true; // default value
+
+    // Load settings
+    if (settingRegistry) {
+      settingRegistry
+        .load(PLUGIN_ID)
+        .then(settings => {
+          extractToNamedFolder = settings.get('extractToNamedFolder').composite as boolean;
+          console.log(`Zip extension settings loaded: extractToNamedFolder=${extractToNamedFolder}`);
+
+          settings.changed.connect(() => {
+            extractToNamedFolder = settings.get('extractToNamedFolder').composite as boolean;
+            console.log(`Zip extension settings changed: extractToNamedFolder=${extractToNamedFolder}`);
+          });
+        })
+        .catch(reason => {
+          console.error('Failed to load settings for jupyterlab-zip-extension.', reason);
+        });
+    }
 
     // UNZIP COMMAND
     commands.addCommand(UNZIP_COMMAND, {
@@ -53,11 +75,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
         try {
           console.log(`Extracting ${item.name}...`);
-          
+
           const result = await callZipAPI<any>('unzip', {
             method: 'POST',
             body: JSON.stringify({
-              archive_path: item.path
+              archive_path: item.path,
+              extract_to_named_folder: extractToNamedFolder
             })
           });
 

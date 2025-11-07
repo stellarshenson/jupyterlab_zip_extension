@@ -43,6 +43,7 @@ publish: install
 install_dependencies:
 	conda install -y nodejs yarn --update-all
 	pip install twine
+	npm install rimraf
 
 ## cleanup all build and metabuild artefacts
 mrproper: clean uninstall
