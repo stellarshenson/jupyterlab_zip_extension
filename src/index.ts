@@ -6,7 +6,24 @@ import {
 import { ICommandPalette, InputDialog } from '@jupyterlab/apputils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { LabIcon } from '@jupyterlab/ui-components';
 import { callZipAPI } from './handler';
+
+// Create a custom zip icon using SVG - inspired by standard ZIP file icons
+const zipIconSvgStr = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
+  <!-- Folder/document shape in darker yellow with visible outline -->
+  <path fill="#D4A017" stroke="#8B7500" stroke-width="1" d="M14,2H6C4.9,2,4,2.9,4,4v16c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V8L14,2z"/>
+  <path fill="#D4A017" stroke="#8B7500" stroke-width="1" d="M14,2v6h6"/>
+  <!-- Large bold lowercase z letter -->
+  <text x="12" y="18" font-family="Arial Black, Arial, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#3D2F0F">z</text>
+</svg>
+`;
+
+const zipIcon = new LabIcon({
+  name: 'jupyterlab_zip_extension:zip',
+  svgstr: zipIconSvgStr
+});
 
 const PLUGIN_ID = 'jupyterlab_zip_extension:plugin';
 const UNZIP_COMMAND = 'filebrowser:unzip-file';
@@ -26,8 +43,18 @@ const plugin: JupyterFrontEndPlugin<void> = {
   ): void => {
     console.log('JupyterLab Zip/Unzip Extension is activated!');
 
-    const { commands } = app;
+    const { commands, docRegistry } = app;
     const { tracker } = factory;
+
+    // Register zip file icon
+    docRegistry.addFileType({
+      name: 'zip',
+      displayName: 'ZIP Archive',
+      extensions: ['.zip'],
+      fileFormat: 'base64',
+      contentType: 'file',
+      icon: zipIcon
+    });
 
     let extractToNamedFolder = true; // default value
 
@@ -53,7 +80,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     commands.addCommand(UNZIP_COMMAND, {
       label: 'Extract Archive',
       caption: 'Extract the selected archive file',
-      iconClass: 'jp-FolderOpenIcon',  // Use iconClass instead of icon
+      icon: zipIcon,
       execute: async () => {
         const current = tracker.currentWidget;
         if (!current) {
@@ -112,7 +139,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     commands.addCommand(ZIP_COMMAND, {
       label: 'Create Archive',
       caption: 'Create a zip archive from selected files/folders',
-      iconClass: 'jp-DownloadIcon',
+      icon: zipIcon,
       execute: async () => {
         const current = tracker.currentWidget;
         if (!current) return;
