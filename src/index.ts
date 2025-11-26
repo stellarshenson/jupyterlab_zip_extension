@@ -9,14 +9,17 @@ import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { callZipAPI } from './handler';
 
-// Create a custom zip icon using SVG - inspired by standard ZIP file icons
+// Create a custom zip icon using SVG - archive box design with original strokes
 const zipIconSvgStr = `
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16">
-  <!-- Folder/document shape in darker yellow with visible outline -->
-  <path fill="#D4A017" stroke="#8B7500" stroke-width="1" d="M14,2H6C4.9,2,4,2.9,4,4v16c0,1.1,0.9,2,2,2h12c1.1,0,2-0.9,2-2V8L14,2z"/>
-  <path fill="#D4A017" stroke="#8B7500" stroke-width="1" d="M14,2v6h6"/>
-  <!-- Large bold lowercase z letter -->
-  <text x="12" y="18" font-family="Arial Black, Arial, sans-serif" font-size="14" font-weight="900" text-anchor="middle" fill="#3D2F0F">z</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-7 0 143 116.15" width="16" height="16">
+  <!-- Top lid fill (light gray) -->
+  <path fill="#E0E0E0" d="M 6.0937682,18.416722 V 6.2291853 H 64.458526 122.82328 V 18.416722 30.604258 H 64.458526 6.0937682 Z"/>
+  <!-- Body fill (light gray) -->
+  <path fill="#E0E0E0" d="M 12.322953,73.396053 V 36.833443 H 64.458526 116.5941 v 36.56261 36.562607 H 64.458526 12.322953 Z"/>
+  <!-- Lid and body outline strokes (black) -->
+  <path fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-miterlimit="2.6131" d="M4.213,3.005c-0.328,0-0.614,0.103-0.84,0.348c-0.246,0.246-0.368,0.532-0.368,0.84v28.446c0,0.308,0.122,0.573,0.368,0.778 c0.226,0.205,0.512,0.308,0.84,0.308h120.463c0.328,0,0.614-0.103,0.84-0.308c0.246-0.205,0.368-0.471,0.368-0.778V4.192 c0-0.308-0.122-0.594-0.368-0.84c-0.226-0.245-0.512-0.348-0.84-0.348H4.213L4.213,3.005z M10.213,33.798 c-0.235,0-0.471,0.103-0.675,0.307c-0.185,0.205-0.287,0.44-0.287,0.656v77.442c0,0.216,0.103,0.451,0.287,0.655 c0.204,0.206,0.43,0.287,0.675,0.287h108.462c0.246,0,0.472-0.081,0.676-0.287c0.185-0.204,0.287-0.43,0.287-0.655V34.761 c0-0.226-0.103-0.451-0.287-0.656c-0.204-0.204-0.439-0.307-0.676-0.307H10.213L10.213,33.798z"/>
+  <!-- Slot (transparent fill, black stroke) -->
+  <path fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" d="M47.999,52.228H80.89 c1.762,0,3.257,0.614,4.485,1.844c1.249,1.249,1.863,2.744,1.863,4.505l0,0c0,1.761-0.614,3.277-1.863,4.567 c-1.229,1.27-2.725,1.925-4.485,1.925H47.999c-1.761,0-3.257-0.655-4.485-1.925c-1.249-1.29-1.863-2.807-1.863-4.567l0,0 c0-1.761,0.614-3.256,1.863-4.505C44.742,52.842,46.237,52.228,47.999,52.228L47.999,52.228z"/>
 </svg>
 `;
 
