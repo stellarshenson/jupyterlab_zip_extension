@@ -107,16 +107,25 @@ const plugin: JupyterFrontEndPlugin<void> = {
       settingRegistry
         .load(PLUGIN_ID)
         .then(settings => {
-          extractToNamedFolder = settings.get('extractToNamedFolder').composite as boolean;
-          console.log(`Zip extension settings loaded: extractToNamedFolder=${extractToNamedFolder}`);
+          extractToNamedFolder = settings.get('extractToNamedFolder')
+            .composite as boolean;
+          console.log(
+            `Zip extension settings loaded: extractToNamedFolder=${extractToNamedFolder}`
+          );
 
           settings.changed.connect(() => {
-            extractToNamedFolder = settings.get('extractToNamedFolder').composite as boolean;
-            console.log(`Zip extension settings changed: extractToNamedFolder=${extractToNamedFolder}`);
+            extractToNamedFolder = settings.get('extractToNamedFolder')
+              .composite as boolean;
+            console.log(
+              `Zip extension settings changed: extractToNamedFolder=${extractToNamedFolder}`
+            );
           });
         })
         .catch(reason => {
-          console.error('Failed to load settings for jupyterlab-zip-extension.', reason);
+          console.error(
+            'Failed to load settings for jupyterlab-zip-extension.',
+            reason
+          );
         });
     }
 
@@ -140,7 +149,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
         const item = selectedItems[0];
         if (!isArchiveFile(item.name)) {
-          console.warn('Selected file is not a supported archive format (.zip)');
+          console.warn(
+            'Selected file is not a supported archive format (.zip)'
+          );
           return;
         }
 
@@ -172,13 +183,17 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const current = tracker.currentWidget;
         if (!current) return false;
         const selectedItems = Array.from(current.selectedItems());
-        return selectedItems.length === 1 && isArchiveFile(selectedItems[0].name);
+        return (
+          selectedItems.length === 1 && isArchiveFile(selectedItems[0].name)
+        );
       },
       isVisible: () => {
         const current = tracker.currentWidget;
         if (!current) return false;
         const selectedItems = Array.from(current.selectedItems());
-        return selectedItems.length === 1 && isArchiveFile(selectedItems[0].name);
+        return (
+          selectedItems.length === 1 && isArchiveFile(selectedItems[0].name)
+        );
       }
     });
 
@@ -194,9 +209,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const selectedItems = Array.from(current.selectedItems());
         if (selectedItems.length === 0) return;
 
-        const defaultName = selectedItems.length === 1 
-          ? `${selectedItems[0].name}.zip`
-          : 'archive.zip';
+        const defaultName =
+          selectedItems.length === 1
+            ? `${selectedItems[0].name}.zip`
+            : 'archive.zip';
 
         const result = await InputDialog.getText({
           title: 'Create Archive',
@@ -206,7 +222,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
         if (result.button.accept && result.value) {
           let archiveName = result.value;
-          
+
           // Ensure .zip extension
           if (!archiveName.endsWith('.zip')) {
             archiveName += '.zip';
@@ -227,7 +243,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
             });
 
             if (zipResult.success) {
-              console.log(`Successfully created archive: ${zipResult.archive_path}`);
+              console.log(
+                `Successfully created archive: ${zipResult.archive_path}`
+              );
               await current.model.refresh();
             } else {
               console.error(`Archive creation failed: ${zipResult.error}`);
@@ -245,7 +263,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
         return Array.from(current.selectedItems()).length > 0;
       }
     });
-      
 
     // Context menu
     app.contextMenu.addItem({
@@ -279,7 +296,3 @@ function isArchiveFile(filename: string): boolean {
 }
 
 export default plugin;
-
-
-
-
