@@ -3,10 +3,11 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import { ICommandPalette, InputDialog } from '@jupyterlab/apputils';
+import { Dialog, ICommandPalette, InputDialog } from '@jupyterlab/apputils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { LabIcon } from '@jupyterlab/ui-components';
+import { Widget } from '@lumino/widgets';
 import { callZipAPI } from './handler';
 
 // Create a custom zip icon using SVG - archive box design with original strokes
@@ -27,6 +28,46 @@ const zipIcon = new LabIcon({
   name: 'jupyterlab_zip_extension:zip',
   svgstr: zipIconSvgStr
 });
+
+/**
+ * Show loading dialog with spinner during zip/unzip operations
+ */
+function showSpinnerDialog(message: string): Dialog<unknown> {
+  const content = document.createElement('div');
+  content.style.display = 'flex';
+  content.style.alignItems = 'center';
+  content.style.gap = '12px';
+  content.style.padding = '8px 0';
+  content.innerHTML = `
+    <div style="
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--jp-border-color2);
+      border-top-color: var(--jp-brand-color1);
+      border-radius: 50%;
+      animation: jp-zip-spin 1s linear infinite;
+    "></div>
+    <span>${message}</span>
+    <style>
+      @keyframes jp-zip-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+  `;
+
+  const body = new Widget({ node: content });
+
+  const dialog = new Dialog({
+    title: 'Zip Extension',
+    body,
+    buttons: []
+  });
+
+  dialog.launch().catch(() => {
+    // Ignore - dialog was disposed programmatically
+  });
+  return dialog;
+}
 
 const PLUGIN_ID = 'jupyterlab_zip_extension:plugin';
 const UNZIP_COMMAND = 'filebrowser:unzip-file';
@@ -103,6 +144,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
           return;
         }
 
+        const dialog = showSpinnerDialog('Extracting archive...');
         try {
           console.log(`Extracting ${item.name}...`);
 
@@ -122,6 +164,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
           }
         } catch (error) {
           console.error('Error extracting archive:', error);
+        } finally {
+          dialog.dispose();
         }
       },
       isEnabled: () => {
@@ -168,11 +212,12 @@ const plugin: JupyterFrontEndPlugin<void> = {
             archiveName += '.zip';
           }
 
+          const dialog = showSpinnerDialog('Creating archive...');
           try {
             console.log(`Creating archive ${archiveName}...`);
-            
+
             const paths = selectedItems.map(item => item.path);
-            
+
             const zipResult = await callZipAPI<any>('zip', {
               method: 'POST',
               body: JSON.stringify({
@@ -189,6 +234,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
             }
           } catch (error) {
             console.error('Error creating archive:', error);
+          } finally {
+            dialog.dispose();
           }
         }
       },
