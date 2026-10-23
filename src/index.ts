@@ -3,9 +3,16 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 
-import { Dialog, ICommandPalette, InputDialog } from '@jupyterlab/apputils';
+import {
+  Dialog,
+  ICommandPalette,
+  InputDialog,
+  showDialog,
+  showErrorMessage
+} from '@jupyterlab/apputils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
+import { ServerConnection } from '@jupyterlab/services';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
 import { callZipAPI } from './handler';
@@ -172,9 +179,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
             await current.model.refresh();
           } else {
             console.error(`Extraction failed: ${result.error}`);
+            dialog.dispose(); // a dialog queued behind a live spinner never shows
+            void showErrorMessage('Extract Archive failed', result.error);
           }
         } catch (error) {
           console.error('Error extracting archive:', error);
+          dialog.dispose(); // a dialog queued behind a live spinner never shows
+          void showErrorMessage('Extract Archive failed', String(error));
         } finally {
           dialog.dispose();
         }
@@ -220,27 +231,53 @@ const plugin: JupyterFrontEndPlugin<void> = {
           label: 'Archive name:'
         });
 
-        if (result.button.accept && result.value) {
-          let archiveName = result.value;
+        if (result.button.accept && result.value?.trim()) {
+          let archiveName = result.value.trim();
 
           // Ensure .zip extension
           if (!archiveName.endsWith('.zip')) {
             archiveName += '.zip';
           }
 
-          const dialog = showSpinnerDialog('Creating archive...');
+          let dialog = showSpinnerDialog('Creating archive...');
           try {
             console.log(`Creating archive ${archiveName}...`);
 
             const paths = selectedItems.map(item => item.path);
+            const post = (overwrite: boolean) =>
+              callZipAPI<any>('zip', {
+                method: 'POST',
+                body: JSON.stringify({
+                  archive_name: archiveName,
+                  paths: paths,
+                  overwrite
+                })
+              });
 
-            const zipResult = await callZipAPI<any>('zip', {
-              method: 'POST',
-              body: JSON.stringify({
-                archive_name: archiveName,
-                paths: paths
-              })
-            });
+            let zipResult;
+            try {
+              zipResult = await post(false);
+            } catch (error) {
+              if (
+                !(
+                  error instanceof ServerConnection.ResponseError &&
+                  error.response.status === 409
+                )
+              ) {
+                throw error;
+              }
+              dialog.dispose(); // a dialog queued behind a live spinner never shows
+              const answer = await showDialog({
+                title: 'Overwrite archive?',
+                body: `${archiveName} already exists. Overwrite it?`,
+                buttons: [Dialog.cancelButton(), Dialog.okButton()]
+              });
+              if (!answer.button.accept) {
+                return;
+              }
+              dialog = showSpinnerDialog('Creating archive...');
+              zipResult = await post(true);
+            }
 
             if (zipResult.success) {
               console.log(
@@ -249,9 +286,13 @@ const plugin: JupyterFrontEndPlugin<void> = {
               await current.model.refresh();
             } else {
               console.error(`Archive creation failed: ${zipResult.error}`);
+              dialog.dispose(); // a dialog queued behind a live spinner never shows
+              void showErrorMessage('Create Archive failed', zipResult.error);
             }
           } catch (error) {
             console.error('Error creating archive:', error);
+            dialog.dispose(); // a dialog queued behind a live spinner never shows
+            void showErrorMessage('Create Archive failed', String(error));
           } finally {
             dialog.dispose();
           }

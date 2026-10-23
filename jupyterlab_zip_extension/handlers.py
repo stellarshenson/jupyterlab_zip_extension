@@ -6,134 +6,134 @@ from pathlib import Path
 from jupyter_server.base.handlers import APIHandler
 from jupyter_server.utils import url_path_join
 import tornado.web
+from tornado.ioloop import IOLoop
+
+
+def _under_root(root_dir, path):
+    """Resolve path against root_dir; refuse anything outside it, and the root itself."""
+    root = os.path.abspath(root_dir)
+    full = os.path.abspath(os.path.join(root, path))
+    if full == root or os.path.commonpath([root, full]) != root:
+        raise tornado.web.HTTPError(403, "Path is outside the server root")
+    return full
+
+
+async def _run_off_loop(handler, work):
+    """Run blocking zip IO in a thread so other requests are served."""
+    input_data = handler.get_json_body()
+    if not isinstance(input_data, dict):
+        raise tornado.web.HTTPError(400, "Request body must be a JSON object")
+    try:
+        status, body = await IOLoop.current().run_in_executor(None, work, handler, input_data)
+    except tornado.web.HTTPError:
+        raise
+    except Exception as e:
+        handler.log.error(f"[ZIP] Failed: {e}", exc_info=True)
+        status, body = 500, {"success": False, "error": str(e)}
+    handler.set_status(status)
+    handler.finish(json.dumps(body))
+
+
+def _free_folder(parent, stem, first_is_stem):
+    """First folder name that does not exist: <stem>, then <stem> (1), <stem> (2), ..."""
+    n = 0 if first_is_stem else 1
+    while True:
+        candidate = os.path.join(parent, stem if n == 0 else f"{stem} ({n})")
+        if not os.path.exists(candidate):
+            return candidate
+        n += 1
+
+
+def _unzip(handler, input_data):
+    archive_path = input_data.get('archive_path')
+    extract_to_named_folder = input_data.get('extract_to_named_folder', True)
+    handler.log.info(f"[UNZIP] Called with params: {input_data}")
+
+    if not archive_path:
+        return 400, {"success": False, "error": "No archive path provided"}
+
+    root_dir = os.path.expanduser(handler.settings['server_root_dir'])
+    full_archive_path = _under_root(root_dir, archive_path)
+
+    if not os.path.exists(full_archive_path):
+        handler.log.error(f"[UNZIP] Archive not found: {full_archive_path}")
+        return 404, {"success": False, "error": "Archive not found"}
+
+    archive_dir = os.path.dirname(full_archive_path)
+    stem = Path(archive_path).stem
+    extract_dir = os.path.join(archive_dir, stem) if extract_to_named_folder else archive_dir
+
+    with zipfile.ZipFile(full_archive_path, 'r') as zip_ref:
+        names = zip_ref.namelist()
+        # Never overwrite: a planned target that is a file, or that already holds a member, is replaced by a new folder
+        if os.path.exists(extract_dir) and (
+            not os.path.isdir(extract_dir)
+            or any(not n.endswith('/') and os.path.exists(os.path.join(extract_dir, n)) for n in names)
+        ):
+            extract_dir = _free_folder(archive_dir, stem, not extract_to_named_folder)
+        zip_ref.extractall(extract_dir)
+        count = sum(1 for n in names if not n.endswith('/'))
+
+    return 200, {
+        "success": True,
+        "extract_path": os.path.relpath(extract_dir, os.path.abspath(root_dir)),
+        "message": f"Extracted {count} files"
+    }
+
+
+def _zip(handler, input_data):
+    archive_name = input_data.get('archive_name')
+    paths = input_data.get('paths', [])
+    handler.log.info(f"[ZIP] Called with params: {input_data}")
+
+    if not archive_name or not paths:
+        handler.log.error("[ZIP] Missing parameters")
+        return 400, {"success": False, "error": "Missing archive name or paths"}
+    if os.path.basename(archive_name) != archive_name or archive_name in ('.', '..'):
+        raise tornado.web.HTTPError(400, "Archive name must not contain a path")
+
+    root_dir = os.path.expanduser(handler.settings['server_root_dir'])
+    root = os.path.abspath(root_dir)
+
+    # Archive goes into the first selected item's parent directory
+    archive_path = os.path.join(os.path.dirname(_under_root(root_dir, paths[0])), archive_name)
+    if os.path.exists(archive_path) and input_data.get('overwrite') is not True:
+        return 409, {"success": False, "error": f"Archive {archive_name} already exists"}
+    full_paths = [_under_root(root_dir, p) for p in paths]
+
+    file_count = 0
+    with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for full_path in full_paths:
+            if os.path.isfile(full_path):
+                zipf.write(full_path, os.path.basename(full_path))
+                file_count += 1
+            elif os.path.isdir(full_path):
+                dir_name = os.path.basename(full_path)
+                for walk_root, dirs, files in os.walk(full_path):
+                    # a directory entry keeps empty folders
+                    zipf.write(walk_root, os.path.normpath(os.path.join(dir_name, os.path.relpath(walk_root, full_path))))
+                    for file in files:
+                        file_path = os.path.join(walk_root, file)
+                        zipf.write(file_path, os.path.join(dir_name, os.path.relpath(file_path, full_path)))
+                        file_count += 1
+
+    return 200, {
+        "success": True,
+        "archive_path": os.path.relpath(archive_path, root),
+        "message": f"Created archive with {file_count} files"
+    }
 
 
 class UnzipHandler(APIHandler):
-    def check_xsrf_cookie(self):
-        """Disable CSRF for API endpoint"""
-        pass
-
-    def post(self):
-        try:
-            input_data = self.get_json_body()
-            archive_path = input_data.get('archive_path')
-            extract_to_named_folder = input_data.get('extract_to_named_folder', True)
-            self.log.info(f"[UNZIP] Called with params: {input_data}")
-
-            if not archive_path:
-                self.set_status(400)
-                self.finish(json.dumps({"success": False, "error": "No archive path provided"}))
-                return
-
-            root_dir = os.path.expanduser(self.settings['server_root_dir'])
-            self.log.debug(f"[UNZIP] Root dir: {root_dir}")
-
-            full_archive_path = os.path.join(root_dir, archive_path)
-            full_archive_path = os.path.expanduser(full_archive_path)
-            self.log.debug(f"[UNZIP] Full archive path: {full_archive_path}")
-
-            if not os.path.exists(full_archive_path):
-                self.log.error(f"[UNZIP] Archive not found: {full_archive_path}")
-                self.set_status(404)
-                self.finish(json.dumps({"success": False, "error": "Archive not found"}))
-                return
-
-            archive_dir = os.path.dirname(full_archive_path)
-
-            if extract_to_named_folder:
-                archive_name = Path(archive_path).stem
-                extract_dir = os.path.join(archive_dir, archive_name)
-                self.log.debug(f"[UNZIP] Extracting to named folder: {extract_dir}")
-            else:
-                extract_dir = archive_dir
-                self.log.debug(f"[UNZIP] Extracting to current directory: {extract_dir}")
-            
-            with zipfile.ZipFile(full_archive_path, 'r') as zip_ref:
-                zip_ref.extractall(extract_dir)
-                
-            relative_extract_path = os.path.relpath(extract_dir, root_dir)
-            self.log.debug(f"[UNZIP] Extracted to: {relative_extract_path}")
-            
-            self.finish(json.dumps({
-                "success": True, 
-                "extract_path": relative_extract_path,
-                "message": f"Extracted {len(zip_ref.namelist())} files"
-            }))
-            
-        except Exception as e:
-            self.log.error(f"[UNZIP] Failed: {e}", exc_info=True)
-            self.set_status(500)
-            self.finish(json.dumps({"success": False, "error": str(e)}))
+    @tornado.web.authenticated
+    async def post(self):
+        await _run_off_loop(self, _unzip)
 
 
 class ZipHandler(APIHandler):
-    def check_xsrf_cookie(self):
-        pass
-
-    def post(self):
-        try:
-            input_data = self.get_json_body()
-            archive_name = input_data.get('archive_name')
-            paths = input_data.get('paths', [])
-
-            self.log.info(f"[ZIP] Called with params: {input_data}")
-            
-            if not archive_name or not paths:
-                self.log.error(f"[ZIP] Missing parameters")
-                self.set_status(400)
-                self.finish(json.dumps({"success": False, "error": "Missing archive name or paths"}))
-                return
-            
-            root_dir = os.path.expanduser(self.settings['server_root_dir'])
-            self.log.debug(f"[ZIP] Root dir: {root_dir}")
-            
-            # Use first selected item's PARENT directory for archive location
-            first_path = paths[0]
-            full_first_path = os.path.join(root_dir, first_path) if not os.path.isabs(first_path) else first_path
-            full_first_path = os.path.expanduser(full_first_path)
-            
-            # Always use parent directory - whether file or folder
-            archive_dir = os.path.dirname(full_first_path)
-            archive_path = os.path.join(archive_dir, archive_name)
-            
-            self.log.debug(f"[ZIP] Archive will be created at: {archive_path}")
-            
-            file_count = 0
-            with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for path in paths:
-                    full_path = os.path.join(root_dir, path) if not os.path.isabs(path) else path
-                    full_path = os.path.expanduser(full_path)
-                    
-                    if os.path.isfile(full_path):
-                        arcname = os.path.basename(full_path)
-                        self.log.debug(f"[ZIP] Adding file: {arcname}")
-                        zipf.write(full_path, arcname)
-                        file_count += 1
-                    elif os.path.isdir(full_path):
-                        dir_name = os.path.basename(full_path)
-                        for root, dirs, files in os.walk(full_path):
-                            for file in files:
-                                file_path = os.path.join(root, file)
-                                arcname = os.path.join(dir_name, os.path.relpath(file_path, full_path))
-                                self.log.debug(f"[ZIP] Adding: {arcname}")
-                                zipf.write(file_path, arcname)
-                                file_count += 1
-            
-            self.log.debug(f"[ZIP] Archive created with {file_count} files at {archive_path}")
-            
-            relative_archive = os.path.relpath(archive_path, root_dir)
-            
-            self.finish(json.dumps({
-                "success": True,
-                "archive_path": relative_archive,
-                "message": f"Created archive with {file_count} files"
-            }))
-            
-        except Exception as e:
-            self.log.error(f"[ZIP] Failed: {e}", exc_info=True)
-            self.set_status(500)
-            self.finish(json.dumps({"success": False, "error": str(e)}))
-    
+    @tornado.web.authenticated
+    async def post(self):
+        await _run_off_loop(self, _zip)
 
 
 def load_jupyter_server_extension(nb_server_app):
