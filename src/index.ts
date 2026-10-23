@@ -1,4 +1,5 @@
 import {
+  IRouter,
   JupyterFrontEnd,
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
@@ -10,11 +11,17 @@ import {
   showDialog,
   showErrorMessage
 } from '@jupyterlab/apputils';
-import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
+import {
+  FileBrowser,
+  IDefaultFileBrowser,
+  IFileBrowserFactory
+} from '@jupyterlab/filebrowser';
 import { ISettingRegistry } from '@jupyterlab/settingregistry';
 import { ServerConnection } from '@jupyterlab/services';
 import { LabIcon } from '@jupyterlab/ui-components';
 import { Widget } from '@lumino/widgets';
+// eslint-disable-next-line jupyter/prefer-lazy-imports -- the zip drive must exist before the file browser restores its path
+import { insideArchive, setupBrowse } from './browse';
 import { callZipAPI } from './handler';
 
 // Create a custom zip icon using SVG - archive box design with original strokes
@@ -84,18 +91,28 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: PLUGIN_ID,
   description: 'A JupyterLab extension to zip/unzip files in the file browser.',
   autoStart: true,
-  requires: [IFileBrowserFactory],
-  optional: [ICommandPalette, ISettingRegistry],
+  requires: [IFileBrowserFactory, IDefaultFileBrowser],
+  optional: [ICommandPalette, ISettingRegistry, IRouter],
   activate: (
     app: JupyterFrontEnd,
     factory: IFileBrowserFactory,
+    defaultBrowser: FileBrowser,
     palette: ICommandPalette | null,
-    settingRegistry: ISettingRegistry | null
+    settingRegistry: ISettingRegistry | null,
+    router: IRouter | null
   ): void => {
     console.log('JupyterLab Zip/Unzip Extension is activated!');
 
     const { commands, docRegistry } = app;
     const { tracker } = factory;
+
+    // Registered during activation, before the file browser restores a saved path on the zip drive
+    setupBrowse(
+      app.serviceManager.contents,
+      defaultBrowser,
+      router,
+      docRegistry
+    );
 
     // Register zip file icon
     docRegistry.addFileType({
@@ -203,7 +220,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
         if (!current) return false;
         const selectedItems = Array.from(current.selectedItems());
         return (
-          selectedItems.length === 1 && isArchiveFile(selectedItems[0].name)
+          selectedItems.length === 1 &&
+          isArchiveFile(selectedItems[0].name) &&
+          !insideArchive(app.serviceManager.contents, current)
         );
       }
     });
@@ -302,7 +321,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
         const current = tracker.currentWidget;
         if (!current) return false;
         return Array.from(current.selectedItems()).length > 0;
-      }
+      },
+      isVisible: () =>
+        !insideArchive(app.serviceManager.contents, tracker.currentWidget)
     });
 
     // Context menu

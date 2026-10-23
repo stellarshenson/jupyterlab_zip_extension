@@ -1,4 +1,6 @@
 import { APIRequestContext, Locator, Page, expect } from '@playwright/test';
+import { createHash } from 'crypto';
+import { crc32, deflateRawSync } from 'zlib';
 
 /** Timeout for waits that follow a server round-trip (zip, unzip, contents listing). */
 export const SERVER_TIMEOUT = 30000;
@@ -222,4 +224,120 @@ export async function stopBrowserPoll(page: Page): Promise<void> {
     return false;
   });
   expect(stopped, 'file browser poll stopped').toBe(true);
+}
+
+/**
+ * Zip bytes with exactly these entries, in order; a name ending in / is a folder entry.
+ * Members are deflated and dated 2020-01-02 03:04:06; names are flagged UTF-8.
+ * Unlike the zip endpoint, any name can be written, including ../ and absolute names.
+ */
+export function zipBytes(entries: [string, string | Buffer][]): Buffer {
+  const time = (3 << 11) | (4 << 5) | (6 >> 1);
+  const date = ((2020 - 1980) << 9) | (1 << 5) | 2;
+  const local: Buffer[] = [];
+  const central: Buffer[] = [];
+  let offset = 0;
+  for (const [name, content] of entries) {
+    const data = Buffer.from(content);
+    const packed = deflateRawSync(data);
+    const nameBuf = Buffer.from(name, 'utf8');
+    const head = Buffer.alloc(30);
+    head.writeUInt32LE(0x04034b50, 0);
+    head.writeUInt16LE(20, 4);
+    head.writeUInt16LE(0x0800, 6);
+    head.writeUInt16LE(8, 8);
+    head.writeUInt16LE(time, 10);
+    head.writeUInt16LE(date, 12);
+    head.writeUInt32LE(crc32(data), 14);
+    head.writeUInt32LE(packed.length, 18);
+    head.writeUInt32LE(data.length, 22);
+    head.writeUInt16LE(nameBuf.length, 26);
+    const dir = Buffer.alloc(46);
+    dir.writeUInt32LE(0x02014b50, 0);
+    dir.writeUInt16LE(20, 4);
+    head.copy(dir, 6, 4, 30); // version needed .. extra length
+    dir.writeUInt32LE(offset, 42);
+    local.push(head, nameBuf, packed);
+    central.push(dir, nameBuf);
+    offset += head.length + nameBuf.length + packed.length;
+  }
+  const dirBytes = Buffer.concat(central);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(entries.length, 8);
+  end.writeUInt16LE(entries.length, 10);
+  end.writeUInt32LE(dirBytes.length, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...local, dirBytes, end]);
+}
+
+/** Write raw bytes as a file through the contents API. */
+export async function putBytes(
+  request: APIRequestContext,
+  path: string,
+  bytes: Buffer
+): Promise<void> {
+  const r = await request.put(`./api/contents/${path}`, {
+    data: { type: 'file', format: 'base64', content: bytes.toString('base64') }
+  });
+  expect(r.ok(), `PUT ${path}`).toBeTruthy();
+}
+
+export function sha256(bytes: Buffer | null): string {
+  expect(bytes, 'file bytes').not.toBeNull();
+  return createHash('sha256').update(bytes!).digest('hex');
+}
+
+/** Path of the default file browser, with its drive name (zip:...) when it has one. */
+export async function browserPath(page: Page): Promise<string> {
+  return page.evaluate(() => {
+    const app = (window as any).jupyterapp;
+    for (const w of app.shell.widgets('left')) {
+      if (w.id === 'filebrowser') {
+        return w.model.path;
+      }
+    }
+    throw new Error('no default file browser');
+  });
+}
+
+/** Number of widgets in the main area. */
+export async function mainWidgets(page: Page): Promise<number> {
+  return page.evaluate(
+    () =>
+      Array.from((window as any).jupyterapp.shell.widgets('main') as any[])
+        .length
+  );
+}
+
+/**
+ * Count every document widget node added to the main area from now on, also one removed again at once.
+ * Returns a function that reads the count.
+ */
+export async function watchDocuments(
+  page: Page
+): Promise<() => Promise<number>> {
+  await page.evaluate(() => {
+    const w = window as any;
+    w.__zipDocsAdded = 0;
+    w.__zipDocObserver?.disconnect();
+    w.__zipDocObserver = new MutationObserver(records => {
+      for (const record of records) {
+        record.addedNodes.forEach(node => {
+          if (
+            node instanceof HTMLElement &&
+            (node.classList.contains('jp-Document') ||
+              node.querySelector('.jp-Document'))
+          ) {
+            w.__zipDocsAdded++;
+          }
+        });
+      }
+    });
+    w.__zipDocObserver.observe(document.querySelector('#jp-main-dock-panel'), {
+      childList: true,
+      subtree: true
+    });
+  });
+  return () => page.evaluate(() => (window as any).__zipDocsAdded);
 }

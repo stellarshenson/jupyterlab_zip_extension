@@ -20,9 +20,19 @@ for the frontend extension.
 ![](./.resources/jupyterlab_zip_2.png)
 ![](./.resources/jupyterlab_zip_3.png)
 
+## Features
+
+- **Create Archive** on a file-browser selection writes a zip next to it, and asks before it overwrites an existing archive
+- **Extract Archive** on a zip extracts it into a folder named after the archive, or into the first free name (`name (1)`, ...); it never overwrites
+- **Browse an archive** - double-click or Enter on a zip enters it in the file browser:
+  - folders open at any depth, and files open read-only; notebooks open without a kernel
+  - Copy and Paste copy files and folders out into a normal folder
+  - the archive itself is never changed
+
 ## Requirements
 
-- JupyterLab >= 4.0.0
+- JupyterLab >= 4.6.0
+- Python >= 3.10
 
 ## Install
 

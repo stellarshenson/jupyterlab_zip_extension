@@ -155,3 +155,46 @@ What happens when an archive is extracted
   - root-cause: 2026-10-23T08:46:43Z @kj the clash test in _unzip checks only exact member paths with os.path.exists, so a member whose parent folder path is an existing file passes it and ZipFile.extractall fails mid-way
   - log: 2026-10-23T08:46:43Z @kj added
 
+## Archive browsing `BROWSE`
+
+Entering a zip in the file browser, read-only navigation inside it and copying items out
+
+- [x] `DEF-BROWSE-14-BADDATE` **Zip with an invalid member date cannot be entered** - MEDIUM; a member whose DOS date is 0 or whose time is out of range makes GET /jupyterlab-zip/browse of its folder and of the member answer 500 'ValueError: month must be in 1..12'; double-click on the zip does nothing; unzip -t reads the archive; `jupyterlab_zip_extension/handlers.py`
+  - evidence: Galata browse.spec.ts:824 "a zip whose members have an invalid DOS date enters and shows the archive's own time" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17; handler-check-4.py BADDATE 9 PASS 0 FAIL in logs/browse-handler-check-verify-4.log
+  - repro: put a zip whose member has DOS date 0, double-click it: no dialog, no tab, browse answers 500; test ui-tests/tests/browse.spec.ts: Archive browsing › a zip whose members have an invalid DOS date enters and shows the archive's own time
+  - test-tags: FUNCTIONAL, INTEGRATION
+  - root-cause: 2026-10-23T13:16:01Z @kj _model calls datetime(*info.date_time) unguarded; zipfile gives (1980, 0, 0, ...) for DOS date 0 and datetime raises ValueError
+  - log: 2026-10-23T13:16:01Z @kj added
+  - log: 2026-10-23T13:42:55Z @kj fixed in source: _model shows the archive file time when datetime raises ValueError; Galata test 'a zip whose members have an invalid DOS date enters ...' passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log), red on 1.2.16 (logs/galata-browse-fix4-red.log); server-check-4.py BADDATE 16 of 16
+  - log: 2026-10-23T13:42:56Z @kj verifier round 3 HTTP probe on installed 1.2.17: 53 PASS, 0 FAIL, no 500 answers (logs/browse-http-probe-fix4.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `DEF-BROWSE-15-BADNAME` **Non-UTF-8 member name answers 500** - MINOR; a member name flagged UTF-8 (bit 11) whose bytes are not UTF-8 makes browse, member and copy answer 500 'Unhandled error' with a traceback in the server log; the enter pre-check shows 'Unhandled error'; nothing is written; `jupyterlab_zip_extension/handlers.py`
+  - evidence: handler-check-4.py BADNAME 12 PASS 0 FAIL in logs/browse-handler-check-verify-4.log: non-UTF-8 member name answers 400, nothing written; installed 1.2.17
+  - repro: python tmp/workflows/zip-browse/fix4/server-check-4.py, checks 'BADNAME': a zip whose member name is the bytes ff fe with the UTF-8 flag; browse, member and copy answer 500
+  - test-tags: INTEGRATION
+  - root-cause: 2026-10-23T13:16:11Z @kj zipfile.ZipFile raises UnicodeDecodeError on open, and ZipFile.open does for a local header name; _off_loop does not map it, so tornado answers 500
+  - log: 2026-10-23T13:16:11Z @kj added
+  - log: 2026-10-23T13:42:56Z @kj fixed in source: _off_loop answers 400 'The archive holds a member name that is not valid UTF-8'; test python tmp/workflows/zip-browse/fix4/server-check-4.py, BADNAME checks 11 of 11 passed on installed 1.2.17 (logs/browse-fix4-server-check-installed.log), 9 answered 500 on 1.2.16 (logs/browse-fix4-server-check-before.log)
+  - log: 2026-10-23T13:42:56Z @kj verifier round 3 HTTP probe on installed 1.2.17: 53 PASS, 0 FAIL, no 500 answers or tracebacks (logs/browse-http-probe-fix4.log); the enter pre-check shows this 400 in the 'Open Archive' dialog, the path the BADZIP test covers
+  - log: 2026-10-23T13:43:33Z @kj observed on installed 1.2.17: double-click on the zip shows 'Open Archive' with that message, the browser stays in its folder, no tab opens (probe tmp/workflows/zip-browse/fix4/galata/badname-probe.spec.js, logs/galata-browse-fix4-badname-probe.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `DEF-BROWSE-16-HIDDEN` **Copy-out writes a hidden name, then answers 404** - MINOR; with ContentsManager.allow_hidden False, POST /jupyterlab-zip/copy of '.env' or of folder '.cfg' writes it into the target folder and answers 404 'file or directory does not exist'; the zip drive lists hidden members the contents API hides; `jupyterlab_zip_extension/handlers.py`
+  - evidence: handler-check-4.py HIDDEN 27 PASS 0 FAIL in logs/browse-handler-check-verify-4.log: with allow_hidden False hidden members are not listed, served or copied; installed 1.2.17
+  - repro: python tmp/workflows/zip-browse/fix4/server-check-4.py, checks 'HIDDEN': contents manager with allow_hidden False, copy .env out of a zip; out/.env is written and the answer is 404
+  - test-tags: INTEGRATION
+  - root-cause: 2026-10-23T13:16:11Z @kj _members, _browse and _copy_out never read allow_hidden; CopyHandler writes first, then cm.get refuses the hidden path with 404
+  - log: 2026-10-23T13:16:11Z @kj added
+  - log: 2026-10-23T13:42:56Z @kj fixed in source: without allow_hidden, hidden members and hidden archive paths are missing (404) and a hidden target folder answers 400 before any write; test server-check-4.py, HIDDEN checks 18 of 18 passed on installed 1.2.17 (logs/browse-fix4-server-check-installed.log), 16 failed on 1.2.16
+  - log: 2026-10-23T13:42:56Z @kj verifier round 3 nohidden HTTP probe on installed 1.2.17: copy of .env and .cfg answer 404 and write nothing, 0 failures (logs/browse-http-probe-fix4-nohidden.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [ ] `DEF-BROWSE-17-SIZECLAIM` **Open limit trusts the size in the zip header** - MINOR; a member whose headers claim 1000 bytes but hold 300 MB of zeros passes the 100 MB open limit; browse of it raises the server's peak RSS from 381 MB to 677 MB, then answers 400 'Not a valid zip archive'; `jupyterlab_zip_extension/handlers.py`
+  - repro: python tmp/workflows/zip-browse/verify-4/handler-check-4.py, probe 'bomb.zip' (305869 bytes, b.txt holds 300 MB of zeros, both headers claim 1000 bytes): GET /jupyterlab-zip/browse?path=bomb.zip/b.txt raises peak RSS 381 MB to 677 MB; honest.zip stays at 381 MB
+  - test-tags: INTEGRATION
+  - root-cause: 2026-10-23T14:08:17Z @kj _browse compares the header file_size with MAX_OPEN_SIZE, then calls src.read() with no size; ZipExtFile.read(-1) asks zlib for up to 2 GiB - 1 of output in one decompress call, only then cuts it to file_size and fails the CRC check; copy and download read in bounded chunks
+  - log: 2026-10-23T14:08:17Z @kj added
+- [ ] `DEF-BROWSE-18-HIDEGLOBS` **Zip drive ignores hide_globs** - MINOR; the zip drive lists members that ContentsManager.hide_globs hides in a normal folder: __pycache__, x.pyc, .DS_Store and backup~; with allow_hidden False it still lists __pycache__, backup~ and x.pyc; `jupyterlab_zip_extension/handlers.py`
+  - repro: python tmp/workflows/zip-browse/verify-4/hideglobs-probe.py: the same 5 names in a folder and in g.zip; with allow_hidden True the contents API lists ['keep.txt'], the zip drive lists ['.DS_Store', '__pycache__', 'backup~', 'keep.txt', 'x.pyc']
+  - test-tags: INTEGRATION
+  - root-cause: 2026-10-23T14:08:24Z @kj _members and the folder listing in _browse filter only on allow_hidden and never call contents_manager.should_list(name), the hide_globs check that FileContentsManager's folder listing applies whatever allow_hidden is
+  - log: 2026-10-23T14:08:24Z @kj added
+

@@ -295,4 +295,226 @@ POST /jupyterlab-zip/zip and /jupyterlab-zip/unzip
   - test-tags: FUNCTIONAL
   - log: 2026-10-23T08:00:00Z @kj added
   - log: 2026-10-23T08:44:27Z @kj closed
+- [x] `ACC-SERV-57-LISTAPI` **Archive listing endpoint** - HIGH; the listing endpoint returns a Jupyter contents model of one folder level inside an archive and reads only the archive's central directory; nothing is extracted to disk
+  - evidence: Galata browse.spec.ts:1095 "returns one folder level as a contents model and writes nothing to disk" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive listing endpoint › returns one folder level as a contents model and writes nothing to disk
+  - test-tags: INTEGRATION
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T11:51:25Z @kj repair 1: browse answers 400, not 500, for a damaged, encrypted or unsupported member; new test 'damaged, encrypted and unsupported members answer 400 and a failed copy leaves nothing in the target' passed on installed 1.2.15 (71 passed, 0 failed, logs/galata-browse-repair-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-SERV-58-SLIP` **Edge: absolute or .. member names** - CRITICAL; a member whose name is absolute or contains .. is never listed, opened or written
+  - evidence: Galata browse.spec.ts:1144 "absolute and .. members are never listed, opened or written" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive listing endpoint › absolute and .. members are never listed, opened or written
+  - test-tags: INTEGRATION
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-SERV-59-BROWSEAUTH` **New endpoints need authentication** - CRITICAL; every new endpoint carries @tornado.web.authenticated; python .github/scripts/check_auth.py passes and tmp/workflows/zip-campaign/auth-probe.py extended to the new endpoints gets 403 without a token
+  - evidence: check_auth.py exit 0, 5 handlers authenticated (logs/browse-check-auth-verify-4.log); auth-probe.py: browse, member and copy without a token answered 403, nothing served or written (logs/auth-probe-browse-verify-4.log); installed 1.2.17
+  - test: python .github/scripts/check_auth.py exits 0; tmp/workflows/zip-campaign/auth-probe.py with the new endpoints gets 403 on each without a token
+  - test-tags: INTEGRATION
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj passed on installed 1.2.14: check_auth.py exit 0; auth-probe.py without a token got 403 on GET browse, GET member and POST copy with nothing served or written, control with the token got 200, 200, 201 (logs/auth-probe-browse.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-SERV-60-BROWSEROOT` **Edge: path outside the root or missing** - CRITICAL; an archive path or target folder outside the server root answers 403; a missing archive or member answers 404
+  - evidence: Galata browse.spec.ts:1193 "answers 403 outside the server root and 404 for a missing archive or member" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive listing endpoint › answers 403 outside the server root and 404 for a missing archive or member
+  - test-tags: INTEGRATION
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:46Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+
+## Archive browsing `BROWSE`
+
+Entering a zip in the file browser, read-only navigation inside it and copying items out
+
+- [x] `ACC-BROWSE-36-ENTER` **Double-click enters a zip** - CRITICAL; double-click on a .zip in the file browser shows the archive's top-level entries in the same file browser; no tab opens in the main area; the archive file is unchanged
+  - evidence: Galata browse.spec.ts:155 "double-click on a zip lists its top-level entries without opening a tab" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › double-click on a zip lists its top-level entries without opening a tab
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-37-ENTERKEY` **Enter key enters a zip** - HIGH; Enter on a selected .zip enters it the same way
+  - evidence: Galata browse.spec.ts:176 "Enter on a selected zip enters it" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › Enter on a selected zip enters it
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-38-CRUMBS` **Breadcrumbs inside an archive** - HIGH; the breadcrumbs show the archive name and the folder path inside the archive
+  - evidence: Galata browse.spec.ts:195 "breadcrumbs show the archive name and the folder path inside it" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › breadcrumbs show the archive name and the folder path inside it
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-39-FOLDERS` **Folders inside an archive** - CRITICAL; double-click on a folder inside the archive shows its entries, at any depth; a folder that exists only as a prefix of member paths (a/b.txt with no a/ entry) is listed as a folder
+  - evidence: Galata browse.spec.ts:219 "enters folders at any depth, including folders that exist only as a path prefix" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › enters folders at any depth, including folders that exist only as a path prefix
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-40-LEAVE` **Leaving an archive** - HIGH; going up from the archive's top level, or a click on any crumb above the archive, shows that folder in the normal file browser
+  - evidence: Galata browse.spec.ts:249 "going up or a crumb click above the archive leaves it" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › going up or a crumb click above the archive leaves it
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-41-COLUMNS` **Entry columns from the archive** - MEDIUM; each entry shows its name, its uncompressed size and its modified time from the archive
+  - evidence: Galata browse.spec.ts:284 "entries show name, uncompressed size and modified time from the archive" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › entries show name, uncompressed size and modified time from the archive
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:05Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-42-OPENRO` **Open a member read-only** - HIGH; double-click on a file inside the archive opens it in its usual viewer with the bytes from the archive (a text file in the editor, a notebook in the notebook panel); its contents model has writable false
+  - evidence: Galata browse.spec.ts:325 "opens a text file and a notebook read-only in their usual viewers" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › opens a text file and a notebook read-only in their usual viewers
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-43-SAVERO` **Save on a member is refused** - HIGH; Save on a file opened from the archive shows an error and changes no file and not the archive
+  - evidence: Galata browse.spec.ts:376 "Save on a file opened from the archive shows an error and writes nothing" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › Save on a file opened from the archive shows an error and writes nothing
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-44-READONLY` **Archive is read-only** - CRITICAL; inside the archive, rename, delete, new file, new folder, upload, paste and duplicate show an error or are not offered; the archive bytes stay the same
+  - evidence: Galata browse.spec.ts:421 "rename, delete, new file, new folder, upload, paste and duplicate are refused" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › rename, delete, new file, new folder, upload, paste and duplicate are refused
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T12:32:53Z @kj repair 2: New File and New Folder inside an archive now reach the zip drive and show 'The archive is read-only' (newUntitled routing in crossDrives); the test asserts that message; passed on installed 1.2.16 (full suite 72 passed, 0 failed, logs/galata-browse-repair-2.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-45-COPYOUT` **Copy a file out** - CRITICAL; Copy (Ctrl+C or context menu) on a file inside the archive, then Paste (Ctrl+V or context menu) in a normal folder writes the file with the same bytes; the archive stays unchanged
+  - evidence: Galata browse.spec.ts:910 "Copy and Paste write a file from the archive with the same bytes" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › Copy and Paste write a file from the archive with the same bytes
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:44Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T11:51:26Z @kj repair 1: a failed file copy answers 400 (damaged, encrypted, unsupported member) or 403 (read-only target) and removes the file it started; new test 'damaged, encrypted and unsupported members answer 400 and a failed copy leaves nothing in the target' passed on installed 1.2.15 (71 passed, 0 failed, logs/galata-browse-repair-1.log)
+  - log: 2026-10-23T12:32:53Z @kj repair 2: a member name the file system refuses (300 bytes) answers 400, not 500, and leaves nothing; other file system errors answer 500 with a reason; new test 'a member name the file system refuses answers 400 ...' passed on installed 1.2.16 (logs/galata-browse-repair-2.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-46-COPYDIR` **Copy a folder out** - HIGH; copying a folder from the archive writes the folder with all its members, including empty folders
+  - evidence: Galata browse.spec.ts:935 "a folder is written with all its members, including empty folders" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › a folder is written with all its members, including empty folders
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T11:51:30Z @kj repair 1: a failed folder copy removes the folder it started; a file beside a same-named folder answers 400, not 500; new test 'damaged, encrypted and unsupported members answer 400 and a failed copy leaves nothing in the target' passed on installed 1.2.15 (71 passed, 0 failed, logs/galata-browse-repair-1.log)
+  - log: 2026-10-23T12:32:53Z @kj repair 2: a folder copy with a member name the file system refuses answers 400 and removes the partial folder; new test 'a member name the file system refuses answers 400 ...' passed on installed 1.2.16 (logs/galata-browse-repair-2.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-47-COPYMULTI` **Copy several items out** - HIGH; several selected items are all written by one Paste
+  - evidence: Galata browse.spec.ts:973 "one Paste writes every selected item" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › one Paste writes every selected item
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:06Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T12:32:53Z @kj repair 2: the test now compares the bytes of top.txt, dir/x.txt, dir/sub/y.txt and nb.ipynb after one Paste, not only the names; passed on installed 1.2.16 (logs/galata-browse-repair-2.log)
+  - log: 2026-10-23T14:10:50Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-48-COPYCLASH` **Edge: copy name clash** - HIGH; an item whose name exists in the target folder is written under JupyterLab's copy name (name-Copy1.ext); the existing file is not changed
+  - evidence: Galata browse.spec.ts:1019 "a name clash writes name-Copy1.ext and keeps the existing file" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › a name clash writes name-Copy1.ext and keeps the existing file
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-49-CUTOUT` **Edge: Cut inside an archive** - HIGH; Cut on items inside the archive followed by Paste in a normal folder changes nothing in the archive and nothing in the folder, and shows an error or is not offered
+  - evidence: Galata browse.spec.ts:1047 "Cut and Paste change neither the archive nor the folder" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › Cut and Paste change neither the archive nor the folder
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-50-REFRESH` **Listing refreshes after Paste** - MEDIUM; after Paste the target folder lists the new items without waiting for the file browser poll
+  - evidence: Galata browse.spec.ts:1071 "the target folder lists pasted items without waiting for the poll" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Copy out › the target folder lists pasted items without waiting for the poll
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-51-DOWNLOAD` **Download a member** - MEDIUM; Download on a file inside the archive saves the member bytes
+  - evidence: Galata browse.spec.ts:497 "Download on a file inside the archive saves the member bytes" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › Download on a file inside the archive saves the member bytes
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T11:51:26Z @kj repair 1: the member endpoint answers 400, not 500, for a damaged, encrypted or unsupported member; new test 'damaged, encrypted and unsupported members answer 400 and a failed copy leaves nothing in the target' passed on installed 1.2.15 (71 passed, 0 failed, logs/galata-browse-repair-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-52-RELOAD` **Edge: page reload inside an archive** - HIGH; reloading the page while the file browser is inside an archive shows that archive folder or the folder holding the archive, and no error dialog
+  - evidence: Galata browse.spec.ts:517 "reload inside an archive shows no error dialog" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › reload inside an archive shows no error dialog
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log); after the reload the browser shows the folder holding the archive, because the page URL names that folder
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-53-BADZIP` **Edge: invalid zip** - MEDIUM; double-click on a .zip that is not a valid archive shows an error dialog, and the file browser stays in its folder
+  - evidence: Galata browse.spec.ts:560 "an invalid zip shows an error dialog and the browser stays in its folder" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › an invalid zip shows an error dialog and the browser stays in its folder
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-54-NAMES` **Edge: spaces and non-ASCII names** - MEDIUM; archive paths and member names with spaces and non-ASCII letters work for enter, open and copy
+  - evidence: Galata browse.spec.ts:583 "spaces and non-ASCII letters work for enter, open and copy" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › spaces and non-ASCII letters work for enter, open and copy
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:07Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-55-NESTED` **Edge: zip inside an archive** - LOW; a .zip inside an archive is listed as a file and can be copied out
+  - evidence: Galata browse.spec.ts:624 "a zip inside an archive is listed as a file and copies out" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › a zip inside an archive is listed as a file and copies out
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj Galata test passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-56-KEEP` **Archive commands still work** - HIGH; Create Archive and Extract Archive still work on files in normal folders, and the 47 existing Galata tests pass
+  - evidence: the 47 Galata tests outside browse.spec.ts passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17
+  - test: full Galata suite (jlpm playwright test in ui-tests/): the 47 tests outside browse.spec.ts pass
+  - test-tags: FUNCTIONAL
+  - log: 2026-10-23T10:23:08Z @kj added
+  - log: 2026-10-23T11:12:45Z @kj the 47 Galata tests outside browse.spec.ts passed on installed 1.2.14 (full suite 70 passed, 0 failed, logs/galata-browse-1.log)
+  - log: 2026-10-23T13:43:45Z @kj after the isVisible change of Create Archive and Extract Archive (ACC-BROWSE-61-HIDECMDS): the 47 Galata tests outside browse.spec.ts passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-61-HIDECMDS` **No archive commands inside an archive** - MEDIUM; Create Archive and Extract Archive are not shown in the context menu while the file browser is inside an archive
+  - evidence: Galata browse.spec.ts:652 "Create Archive and Extract Archive are not in the context menu inside an archive" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17; Jest 24 of 24 passed in logs/browse-jest-verify-4.log
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › Create Archive and Extract Archive are not in the context menu inside an archive
+  - test-tags: FUNCTIONAL, UNIT
+  - mechanism: 2026-10-23T13:16:20Z @kj isVisible of both commands is false while the current file browser path is on the zip drive (insideArchive in src/browse.ts)
+  - log: 2026-10-23T13:16:20Z @kj added
+  - log: 2026-10-23T13:43:33Z @kj Galata test passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log); red on 1.2.16 (logs/galata-browse-fix4-red.log); the first 1.2.17 run failed on a test defect, the test read hidden menu labels; it now reads visible labels only
+  - log: 2026-10-23T13:43:33Z @kj a probe that makes both commands visible again turns the test's label query red (tmp/workflows/zip-browse/fix4/galata/hidecmds-probe.spec.js, logs/galata-browse-fix4-probe.log); Jest insideArchive passes, red by mutation (logs/browse-fix4-jest-mutation.log)
+  - log: 2026-10-23T14:10:51Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-62-NESTMSG` **Zip inside an archive asks to copy it out** - MEDIUM; double-click or Enter on a .zip inside an archive shows the message 'Copy it out to browse it' and opens no tab
+  - evidence: Galata browse.spec.ts:688 "double-click or Enter on a zip inside an archive shows 'Copy it out to browse it' and opens no tab" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17; Jest 24 of 24 passed in logs/browse-jest-verify-4.log
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › double-click or Enter on a zip inside an archive shows 'Copy it out to browse it' and opens no tab
+  - test-tags: FUNCTIONAL, UNIT
+  - mechanism: 2026-10-23T13:16:20Z @kj the handleOpen override in enterArchives shows the message for a .zip on the zip drive and never calls the original handleOpen
+  - log: 2026-10-23T13:16:20Z @kj added
+  - log: 2026-10-23T13:43:34Z @kj Galata test passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log); red on 1.2.16: 'File Load Error for inner.zip' instead of the message (logs/galata-browse-fix4-red.log); Jest test passes, red by mutation (logs/browse-fix4-jest-mutation.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-63-NOKERNEL` **No kernel for a notebook in an archive** - MEDIUM; a notebook opened from an archive starts no kernel; the sessions API lists no session for it
+  - evidence: Galata browse.spec.ts:722 "a notebook opened from an archive starts no kernel" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17; Jest 24 of 24 passed in logs/browse-jest-verify-4.log
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › a notebook opened from an archive starts no kernel
+  - test-tags: FUNCTIONAL, UNIT
+  - mechanism: 2026-10-23T13:16:20Z @kj a wrapper of DocumentRegistry.getKernelPreference sets shouldStart and canStart false for a path on the zip drive (noKernelInArchives in src/browse.ts)
+  - log: 2026-10-23T13:16:20Z @kj added
+  - log: 2026-10-23T13:43:34Z @kj Galata test passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log); red on 1.2.16: a session started for nb.ipynb (logs/galata-browse-fix4-red.log); Jest noKernelInArchives passes, red by mutation (logs/browse-fix4-jest-mutation.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
+- [x] `ACC-BROWSE-64-SIZECAP` **Members over 100 MB are not opened** - HIGH; opening a member whose uncompressed size is over 100 MB shows an error that says to copy it out, and the server reads none of its data into memory; Copy and Download still work for it
+  - evidence: Galata browse.spec.ts:764 "a member over 100 MB shows an error to copy it out, and Copy and Download still work" passed in logs/galata-browse-verify-4.log (77 of 77 passed) on installed 1.2.17; handler-check-4.py SIZECAP 7 PASS 0 FAIL in logs/browse-handler-check-verify-4.log
+  - test: ui-tests/tests/browse.spec.ts: Archive browsing › a member over 100 MB shows an error to copy it out, and Copy and Download still work
+  - test-tags: FUNCTIONAL, INTEGRATION
+  - mechanism: 2026-10-23T13:16:20Z @kj _browse compares file_size from the central directory with MAX_OPEN_SIZE in handlers.py before it opens the member; copy and member stream in chunks
+  - log: 2026-10-23T13:16:20Z @kj added
+  - log: 2026-10-23T13:43:34Z @kj Galata test passed on installed 1.2.17 (77 passed, 0 failed, logs/galata-browse-fix4.log); not run on 1.2.16, where opening the member sends a 734 MB answer; server-check-4.py SIZECAP 9 of 9 on 1.2.17, no member data opened; 5 failed on 1.2.16 (logs/browse-fix4-server-check-before.log)
+  - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
 
