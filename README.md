@@ -20,7 +20,6 @@ for the frontend extension.
 ![](./.resources/jupyterlab_zip_2.png)
 ![](./.resources/jupyterlab_zip_3.png)
 
-
 ## Requirements
 
 - JupyterLab >= 4.0.0

@@ -91,14 +91,14 @@ export async function readBytes(
 
 /**
  * Entry names of a zip file on the server, read from the central directory.
- * Null where the zip is missing.
+ * Null where the zip is missing or still being written (no end record yet), so polling callers retry.
  */
 export async function zipEntries(
   request: APIRequestContext,
   path: string
 ): Promise<string[] | null> {
   const buf = await readBytes(request, path);
-  if (!buf) {
+  if (!buf || buf.lastIndexOf(Buffer.from([0x50, 0x4b, 0x05, 0x06])) < 0) {
     return null;
   }
   return entriesOf(buf);

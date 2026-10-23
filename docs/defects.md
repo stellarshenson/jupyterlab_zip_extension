@@ -23,7 +23,8 @@ Request paths, cross-site requests and access limits
   - log: 2026-10-23T06:52:26Z @kj fixed in source, verified on 1.2.10: handlers.py resolves every path under the server root (403 outside) and refuses an archive_name holding a path; 3 defect tests pass
   - log: 2026-10-23T08:35:44Z @kj root-cause overridden; reason: round 3 found a second escape path
   - log: 2026-10-23T08:44:27Z @kj closed
-- [ ] `DEF-SECU-2-XSRF` **XSRF check disabled** - CRITICAL; both handlers override check_xsrf_cookie with pass, so a cross-site POST carrying the user's session cookie runs zip or unzip; `jupyterlab_zip_extension/handlers.py`
+- [x] `DEF-SECU-2-XSRF` **XSRF check disabled** - CRITICAL; both handlers override check_xsrf_cookie with pass, so a cross-site POST carrying the user's session cookie runs zip or unzip; `jupyterlab_zip_extension/handlers.py`
+  - evidence: 1.2.13 installed with XSRF checking on: auth-probe.py probe B (login cookie, no _xsrf) answers 403 and writes no archive; logs/auth-probe-verify-1.log
   - repro: POST /jupyterlab-zip/unzip with the session cookie and no X-XSRFToken header, see 200 instead of 403
   - test-tags: FUNCTIONAL
   - root-cause: 2026-10-23T06:20:57Z @kj check_xsrf_cookie overridden with pass in UnzipHandler and ZipHandler; the body is parsed without a content-type check, so a plain form post works
@@ -32,12 +33,15 @@ Request paths, cross-site requests and access limits
   - log: 2026-10-23T06:52:26Z @kj fixed in source, verified on 1.2.10: check_xsrf_cookie overrides removed from both handlers; frontend callZipAPI sends the token; no galata test (test server disables the check)
   - log: 2026-10-23T08:44:28Z @kj left open: no test and no verifier proof; fix (check_xsrf_cookie overrides removed in handlers.py) was only diff-checked in 05-verify-1/2; needs a run with XSRF checking enabled
   - log: 2026-10-23T08:49:09Z @kj XSRF proof, installed 1.2.12 with XSRF checking on: POST with a login cookie and no _xsrf or X-XSRFToken answers 403 and writes no archive (auth-probe.py probe B, logs/auth-probe-before.log); defect left open
-- [ ] `DEF-SECU-13-NOAUTH` **Zip and unzip answer a client with no token** - CRITICAL; POST /jupyterlab-zip/zip with no token and an _xsrf cookie from GET /login answers 200 and writes the archive, because the post methods are not authenticated and the server allows unauthenticated access by default; `jupyterlab_zip_extension/handlers.py`
+  - log: 2026-10-23T09:21:08Z @kj closed
+- [x] `DEF-SECU-13-NOAUTH` **Zip and unzip answer a client with no token** - CRITICAL; POST /jupyterlab-zip/zip with no token and an _xsrf cookie from GET /login answers 200 and writes the archive, because the post methods are not authenticated and the server allows unauthenticated access by default; `jupyterlab_zip_extension/handlers.py`
+  - evidence: 1.2.13 installed: auth-probe.py probe A (no token) answers 403 and writes no archive; logs/auth-probe-verify-1.log, tmp/workflows/template-upgrade/04-verify-1.json
   - repro: python tmp/workflows/zip-campaign/auth-probe.py BASE_URL TOKEN ROOT against a running server, probe A answers 200 and probe-a.zip appears instead of 403
   - test-tags: MANUAL
   - root-cause: 2026-10-23T08:49:02Z @kj ZipHandler.post and UnzipHandler.post carry no @tornado.web.authenticated; jupyter_server 2.21.1 skips its own check in JupyterHandler.prepare when ServerApp.allow_unauthenticated_access is True, the default
   - log: 2026-10-23T08:49:02Z @kj added
   - log: 2026-10-23T08:49:08Z @kj fix is in source (@tornado.web.authenticated on both post methods); proven only after the next make install and a rerun of auth-probe.py
+  - log: 2026-10-23T09:21:08Z @kj closed
 
 ## Data loss `DATA`
 

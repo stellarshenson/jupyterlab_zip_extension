@@ -9,11 +9,7 @@ export async function callZipAPI<T>(
   init: RequestInit = {}
 ): Promise<T> {
   const settings = ServerConnection.makeSettings();
-  const requestUrl = URLExt.join(
-    settings.baseUrl,
-    'jupyterlab-zip',
-    endPoint
-  );
+  const requestUrl = URLExt.join(settings.baseUrl, 'jupyterlab-zip', endPoint);
 
   let response: Response;
   try {
