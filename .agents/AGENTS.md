@@ -26,7 +26,7 @@ JupyterLab 4 extension that adds Create Archive and Extract Archive actions to t
 - Frontend: `src/index.ts` (commands, file-browser context menu, zip file type, spinner dialog), `src/handler.ts` (`callZipAPI`)
 - Server: `jupyterlab_zip_extension/handlers.py`, endpoints `POST /jupyterlab-zip/zip` and `POST /jupyterlab-zip/unzip`
 - Setting `extractToNamedFolder` in `schema/plugin.json`
-- npm package `jupyterlab_zip_extension`, PyPI package `jupyterlab-zip-extension`
+- npm package `@stellarshenson/jupyterlab-zip-extension`, PyPI package `jupyterlab-zip-extension`
 - Build: hatch with `hatch-nodejs-version`, version read from `package.json`
 - Tests: Jest in `src/__tests__`, Galata (Playwright) in `ui-tests/`
 - Trackers: `docs/acc-crit.md` and `docs/defects.md`, written only through pm-tools with author handle `@kj`

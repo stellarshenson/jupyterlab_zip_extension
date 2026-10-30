@@ -12,6 +12,14 @@ except ImportError:
 
 from .handlers import load_jupyter_server_extension
 
+
+def _jupyter_labextension_paths():
+    return [{
+        "src": "labextension",
+        "dest": "@stellarshenson/jupyterlab-zip-extension"
+    }]
+
+
 # This is required for Jupyter Server to find the extension
 def _load_jupyter_server_extension(serverapp):
     load_jupyter_server_extension(serverapp)

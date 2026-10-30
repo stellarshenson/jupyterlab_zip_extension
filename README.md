@@ -1,7 +1,7 @@
 # jupyterlab_zip_extension
 
 [![GitHub Actions](https://github.com/stellarshenson/jupyterlab_zip_extension/actions/workflows/build.yml/badge.svg)](https://github.com/stellarshenson/jupyterlab_zip_extension/actions/workflows/build.yml)
-[![npm version](https://img.shields.io/npm/v/jupyterlab_zip_extension.svg)](https://www.npmjs.com/package/jupyterlab_zip_extension)
+[![npm version](https://img.shields.io/npm/v/@stellarshenson/jupyterlab-zip-extension.svg)](https://www.npmjs.com/package/@stellarshenson/jupyterlab-zip-extension)
 [![PyPI version](https://img.shields.io/pypi/v/jupyterlab-zip-extension.svg)](https://pypi.org/project/jupyterlab-zip-extension/)
 [![Total PyPI downloads](https://static.pepy.tech/badge/jupyterlab-zip-extension)](https://pepy.tech/project/jupyterlab-zip-extension)
 [![JupyterLab 4](https://img.shields.io/badge/JupyterLab-4-orange.svg)](https://jupyterlab.readthedocs.io/en/stable/)
@@ -13,7 +13,7 @@
 Jupyterlab extension that adds archive zip / unzip capabilities to File Browser
 
 This extension is composed of a Python package named `jupyterlab_zip_extension`
-for the server extension and a NPM package named `jupyterlab_zip_extension`
+for the server extension and a NPM package named `@stellarshenson/jupyterlab-zip-extension`
 for the frontend extension.
 
 ![](./.resources/jupyterlab_zip_1.png)
@@ -116,7 +116,7 @@ pip uninstall jupyterlab_zip_extension
 
 In development mode, you will also need to remove the symlink created by `jupyter labextension develop`
 command. To find its location, you can run `jupyter labextension list` to figure out where the `labextensions`
-folder is located. Then you can remove the symlink named `jupyterlab_zip_extension` within that folder.
+folder is located. Then you can remove the symlink named `@stellarshenson/jupyterlab-zip-extension` within that folder.
 
 ### Testing the extension
 

@@ -17,7 +17,7 @@ import {
   stopBrowserPoll
 } from './helpers';
 
-const PLUGIN = 'jupyterlab_zip_extension:plugin';
+const PLUGIN = '@stellarshenson/jupyterlab-zip-extension:plugin';
 
 /** Make <dir>/a.zip holding a.txt = "alpha" and sub/b.txt = "beta", through the zip endpoint. */
 async function makeZip(request: any, dir: string): Promise<void> {

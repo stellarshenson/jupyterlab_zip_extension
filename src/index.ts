@@ -83,7 +83,7 @@ function showSpinnerDialog(message: string): Dialog<unknown> {
   return dialog;
 }
 
-const PLUGIN_ID = 'jupyterlab_zip_extension:plugin';
+const PLUGIN_ID = '@stellarshenson/jupyterlab-zip-extension:plugin';
 const UNZIP_COMMAND = 'filebrowser:unzip-file';
 const ZIP_COMMAND = 'filebrowser:zip-files';
 
@@ -277,12 +277,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
             try {
               zipResult = await post(false);
             } catch (error) {
-              if (
-                !(
-                  error instanceof ServerConnection.ResponseError &&
-                  error.response.status === 409
-                )
-              ) {
+              if (!(
+                error instanceof ServerConnection.ResponseError &&
+                error.response.status === 409
+              )) {
                 throw error;
               }
               dialog.dispose(); // a dialog queued behind a live spinner never shows
