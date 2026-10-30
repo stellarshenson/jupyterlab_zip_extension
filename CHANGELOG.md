@@ -2,6 +2,18 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## [1.2.20] - 2026-10-30
+
+### Changed
+
+- The npm package and the labextension are now named `@stellarshenson/jupyterlab-zip-extension`, because npm refuses the unscoped dashed name and the URI parser of JupyterLab 4.6.5 refuses an underscore in a plugin id; the PyPI distribution and the Python module keep their names, so `pip install jupyterlab_zip_extension` is unchanged
+- The settings id is now `@stellarshenson/jupyterlab-zip-extension:plugin`
+- Built against JupyterLab 4.6.5, `@jupyter/builder` 1.2.4, prettier 3.9.10 and Galata 5.6.5; Python test extras floored at coverage 7.17 and pytest 9.2
+
+### Fixed
+
+- The Python package now declares `_jupyter_labextension_paths()`, which it lacked
+
 ## [1.2.18] - 2026-10-23
 
 ### Added
