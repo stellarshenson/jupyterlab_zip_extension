@@ -59,7 +59,8 @@
     "dependencies": {
         "@jupyterlab/application": "^4.6.0",
         "@jupyterlab/coreutils": "^6.6.0",
-        "@jupyterlab/services": "^7.6.0"
+        "@jupyterlab/services": "^7.6.0",
+        "@jupyterlab/settingregistry": "^4.6.0"
     },
     "devDependencies": {
         "@eslint/js": "^9.0.0",
