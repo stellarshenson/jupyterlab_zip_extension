@@ -41,8 +41,14 @@ test('applies a changed extractToNamedFolder to the next extract without reload'
   });
   const box = page.getByRole('checkbox', { name: /Extract to Named Folder/i });
   await expect(box).toBeChecked({ timeout: SERVER_TIMEOUT });
+  // The form saves after a delay: extract only once the extension has the new value
+  const applied = page.waitForEvent('console', {
+    predicate: message => message.text().includes('extractToNamedFolder=false'),
+    timeout: SERVER_TIMEOUT
+  });
   await box.uncheck();
   await expect(box).not.toBeChecked();
+  await applied;
 
   // Back to the file browser, same page, no reload
   await page.sidebar.openTab('filebrowser');

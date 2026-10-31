@@ -1,6 +1,6 @@
 {
     "name": "@stellarshenson/jupyterlab-zip-extension",
-    "version": "1.2.20",
+    "version": "1.2.21",
     "description": "Jupyterlab extension that adds archive zip / unzip capabilities to File Browser",
     "keywords": [
         "jupyter",
@@ -19,7 +19,8 @@
     "files": [
         "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
         "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}",
-        "src/**/*.{ts,tsx}"
+        "src/**/*.{ts,tsx}",
+        "schema/*.json"
     ],
     "main": "lib/index.js",
     "types": "lib/index.d.ts",

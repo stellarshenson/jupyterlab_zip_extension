@@ -10,3 +10,4 @@ docs/acc-crit*.md
 docs/defects*.md
 JOURNAL.md
 .claude/JOURNAL.md
+package-lock.json
