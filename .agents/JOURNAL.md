@@ -68,3 +68,6 @@ This journal tracks substantive work on documents, diagrams, and documentation c
 
 17. **Task - Declared dependency** (v1.2.24): declared `@jupyterlab/settingregistry` in `package.json`<br>
     **Result**: `src/index.ts` imports `ISettingRegistry`, and the second audit found the package undeclared, so the build relied on another package bringing it in. It is declared at `^4.6.0`, the floor of `@jupyterlab/application`. `yarn.lock` and `package-lock.json` add the descriptor and move no version. `jlpm install --immutable`, `jlpm build:lib` and `jlpm run lint:check` pass.
+
+18. **Task - Check Links failure on the pepy.tech badge** (v1.2.24): cleared the red Build after the Makefile 1.48 commit `a0238c7`<br>
+    **Result**: Check Links failed on `https://pepy.tech/project/jupyterlab-zip-extension` with `503: Service Unavailable`. The same URL answered 503 from the workstation, so the failing side is the external service, not the README. The badge stays; `https://pepy.tech/.*` and `https://static.pepy.tech/.*` join `ignore_links` in `.github/workflows/build.yml`, the pattern the other extensions already carry. Commit `b8dafa0` `ci: ignore pepy.tech links in the link check`, pushed to main. CI green at `b8dafa0`: Build and Check Release both pass.
