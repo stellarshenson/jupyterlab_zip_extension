@@ -99,7 +99,8 @@ What goes into a created archive
   - log: 2026-10-23T06:38:23Z @kj test ui-tests/tests/defects.spec.ts: DEF-ARCH-6-EMPTYDIR › an empty subfolder is kept in the archive fails on 1.2.9 (galata baseline 2026-10-23)
   - log: 2026-10-23T06:52:26Z @kj fixed in source, verified on 1.2.10: every walked directory gets a zip entry; defect test passes. Side effect: the unzip message counts directory entries (Extracted 3 files for 2 files and a folder)
   - log: 2026-10-23T08:44:28Z @kj closed
-- [ ] `DEF-ARCH-7-BLOCKING` **Large archive freezes the server** - MEDIUM; zip and unzip run synchronously inside the request handler; all other requests wait until a large archive is finished; `jupyterlab_zip_extension/handlers.py`
+- [x] `DEF-ARCH-7-BLOCKING` **Large archive freezes the server** - MEDIUM; zip and unzip run synchronously inside the request handler; all other requests wait until a large archive is finished; `jupyterlab_zip_extension/handlers.py`
+  - evidence: tmp/workflows/improve-44/scratch/jupyterlab_zip_extension/loop_check.py: _run_off_loop on 600 MB of random data, zip 13.8 s and unzip 0.8 s, a 10 ms event-loop timer never waited over 12 ms
   - repro: zip a folder of several GB, open another notebook meanwhile, see it wait
   - test-tags: MANUAL
   - root-cause: 2026-10-23T06:20:58Z @kj post is a plain def doing zipfile IO on the Tornado event loop, no executor
@@ -107,6 +108,7 @@ What goes into a created archive
   - log: 2026-10-23T06:38:29Z @kj no galata test: a several-GB archive is needed; stays MANUAL
   - log: 2026-10-23T06:52:26Z @kj fixed in source on 1.2.10: zip and unzip IO run through run_in_executor; stays MANUAL, no multi-GB check made; 33 other tests pass
   - log: 2026-10-23T08:44:28Z @kj left open: no test and no verifier proof; fix (zip and unzip in run_in_executor) was only diff-checked; needs a several-GB archive run with a second request served meanwhile
+  - log: 2026-11-13T07:05:56Z @kj closed
 - [x] `DEF-ARCH-8-EMPTYBODY` **Bad body answers 500, not 400** - MINOR; a request with no body or malformed JSON answers 500 instead of 400; `jupyterlab_zip_extension/handlers.py`
   - evidence: Galata defects.spec.ts 'DEF-ARCH-8-EMPTYBODY a request with no body or malformed JSON answers 400' passed in logs/galata-verify-4.log (47 passed, 0 failed) against 1.2.12
   - repro: POST /jupyterlab-zip/zip with an empty body, see 500 'NoneType' object has no attribute 'get'
@@ -133,6 +135,13 @@ What goes into a created archive
   - log: 2026-10-23T07:59:59Z @kj reported during the fix stage: a JSON string body answered 500 after the empty-body fix
   - log: 2026-10-23T08:09:46Z @kj fixed in source, verified on 1.2.11: galata 42 of 42 green (logs/galata-after-fix2-rerun2.log); non-object body answers 400
   - log: 2026-10-23T08:44:28Z @kj closed
+- [x] `DEF-ARCH-19-SELFZIP` **Archive that holds itself fills the disk** - MAJOR; Create Archive with a selection that holds the archive being overwritten never ends; the archive grows until the disk is full (440 MB in 8 s); `jupyterlab_zip_extension/handlers.py`
+  - evidence: Galata defects.spec.ts 'DEF-ARCH-19-SELFZIP zip refuses a selection that holds the archive it would write' passed in logs/fleet-build-test.log (79 passed) on 1.2.26: 400, archive bytes unchanged
+  - repro: zip x.bin as archive.zip, then POST /jupyterlab-zip/zip paths [x.bin, archive.zip], archive_name archive.zip, overwrite true; in the UI: select all, Create Archive, archive.zip, twice
+  - test-tags: FUNCTIONAL
+  - root-cause: 2026-11-13T06:49:51Z @kj _zip opens the archive for writing, then zipf.write reads the same file as a member; deflated output is appended faster than it is read, so the read never reaches the end
+  - log: 2026-11-13T06:49:51Z @kj added
+  - log: 2026-11-13T07:05:56Z @kj closed
 
 ## Extraction `EXTR`
 
@@ -149,11 +158,13 @@ What happens when an archive is extracted
   - log: 2026-10-23T07:59:59Z @kj decision @kj 2026-10-23: same rule as DEF-DATA-4-UNZOVER; x.txt.zip beside x.txt extracts into x.txt (1)/
   - log: 2026-10-23T08:09:46Z @kj fixed in source, verified on 1.2.11: galata 42 of 42 green (logs/galata-after-fix2-rerun2.log); x.txt.zip extracts into x.txt (1)
   - log: 2026-10-23T08:44:28Z @kj closed
-- [ ] `DEF-EXTR-12-FILEFOLDER` **Extract fails when an archive folder name equals an existing file** - MEDIUM; Extract Archive in place answers 500 NotADirectoryError when a member such as a/b.txt needs a folder a and a is an existing file in the target folder; members listed before it are already written, so the extraction is partial; `jupyterlab_zip_extension/handlers.py`
+- [x] `DEF-EXTR-12-FILEFOLDER` **Extract fails when an archive folder name equals an existing file** - MEDIUM; Extract Archive in place answers 500 NotADirectoryError when a member such as a/b.txt needs a folder a and a is an existing file in the target folder; members listed before it are already written, so the extraction is partial; `jupyterlab_zip_extension/handlers.py`
+  - evidence: Galata defects.spec.ts 'DEF-EXTR-12-FILEFOLDER in-place extract lands in the stem folder when an archive folder name is an existing file' passed in logs/fleet-build-test.log (79 passed) on 1.2.26; _clashes also tests each parent folder of a member
   - repro: python3 tmp/workflows/zip-campaign/08-scratch/repro.py: folder holds file a, archive members c.txt then a/b.txt, _unzip with extract_to_named_folder false raises NotADirectoryError, c.txt is written, a/b.txt is not
   - test-tags: FUNCTIONAL
   - root-cause: 2026-10-23T08:46:43Z @kj the clash test in _unzip checks only exact member paths with os.path.exists, so a member whose parent folder path is an existing file passes it and ZipFile.extractall fails mid-way
   - log: 2026-10-23T08:46:43Z @kj added
+  - log: 2026-11-13T07:05:56Z @kj closed
 
 ## Archive browsing `BROWSE`
 
@@ -187,14 +198,18 @@ Entering a zip in the file browser, read-only navigation inside it and copying i
   - log: 2026-10-23T13:42:56Z @kj fixed in source: without allow_hidden, hidden members and hidden archive paths are missing (404) and a hidden target folder answers 400 before any write; test server-check-4.py, HIDDEN checks 18 of 18 passed on installed 1.2.17 (logs/browse-fix4-server-check-installed.log), 16 failed on 1.2.16
   - log: 2026-10-23T13:42:56Z @kj verifier round 3 nohidden HTTP probe on installed 1.2.17: copy of .env and .cfg answer 404 and write nothing, 0 failures (logs/browse-http-probe-fix4-nohidden.log)
   - log: 2026-10-23T14:10:52Z @kj closed: verified by verifier round 4 (tmp/workflows/zip-browse/03-verify-4.json, verdict clean)
-- [ ] `DEF-BROWSE-17-SIZECLAIM` **Open limit trusts the size in the zip header** - MINOR; a member whose headers claim 1000 bytes but hold 300 MB of zeros passes the 100 MB open limit; browse of it raises the server's peak RSS from 381 MB to 677 MB, then answers 400 'Not a valid zip archive'; `jupyterlab_zip_extension/handlers.py`
+- [x] `DEF-BROWSE-17-SIZECLAIM` **Open limit trusts the size in the zip header** - MINOR; a member whose headers claim 1000 bytes but hold 300 MB of zeros passes the 100 MB open limit; browse of it raises the server's peak RSS from 381 MB to 677 MB, then answers 400 'Not a valid zip archive'; `jupyterlab_zip_extension/handlers.py`
+  - evidence: _browse reads file_size + 1 bytes; probe bomb.zip (300 MB of zeros, headers claim 1000 bytes): peak RSS 375 MB before and after, BadZipFile 'Bad CRC-32', which the handler answers 400; Galata 79 passed on 1.2.26
   - repro: python tmp/workflows/zip-browse/verify-4/handler-check-4.py, probe 'bomb.zip' (305869 bytes, b.txt holds 300 MB of zeros, both headers claim 1000 bytes): GET /jupyterlab-zip/browse?path=bomb.zip/b.txt raises peak RSS 381 MB to 677 MB; honest.zip stays at 381 MB
-  - test-tags: INTEGRATION
+  - test-tags: MANUAL
   - root-cause: 2026-10-23T14:08:17Z @kj _browse compares the header file_size with MAX_OPEN_SIZE, then calls src.read() with no size; ZipExtFile.read(-1) asks zlib for up to 2 GiB - 1 of output in one decompress call, only then cuts it to file_size and fails the CRC check; copy and download read in bounded chunks
   - log: 2026-10-23T14:08:17Z @kj added
-- [ ] `DEF-BROWSE-18-HIDEGLOBS` **Zip drive ignores hide_globs** - MINOR; the zip drive lists members that ContentsManager.hide_globs hides in a normal folder: __pycache__, x.pyc, .DS_Store and backup~; with allow_hidden False it still lists __pycache__, backup~ and x.pyc; `jupyterlab_zip_extension/handlers.py`
+  - log: 2026-11-13T07:05:56Z @kj closed
+  - log: 2026-11-13T07:05:56Z @kj edited test-tags "INTEGRATION" -> "MANUAL"
+- [-] `DEF-BROWSE-18-HIDEGLOBS` **Zip drive ignores hide_globs** - MINOR; the zip drive lists members that ContentsManager.hide_globs hides in a normal folder: __pycache__, x.pyc, .DS_Store and backup~; with allow_hidden False it still lists __pycache__, backup~ and x.pyc; `jupyterlab_zip_extension/handlers.py`
   - repro: python tmp/workflows/zip-browse/verify-4/hideglobs-probe.py: the same 5 names in a folder and in g.zip; with allow_hidden True the contents API lists ['keep.txt'], the zip drive lists ['.DS_Store', '__pycache__', 'backup~', 'keep.txt', 'x.pyc']
   - test-tags: INTEGRATION
   - root-cause: 2026-10-23T14:08:24Z @kj _members and the folder listing in _browse filter only on allow_hidden and never call contents_manager.should_list(name), the hide_globs check that FileContentsManager's folder listing applies whatever allow_hidden is
   - log: 2026-10-23T14:08:24Z @kj added
+  - log: 2026-11-13T07:06:17Z @kj rejected: not worth a fix: the archive listing shows what the archive holds, the same members Extract Archive and copy-out write; hiding __pycache__ or x.pyc would make the listing disagree with them; no user is harmed
 

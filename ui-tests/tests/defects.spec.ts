@@ -17,10 +17,12 @@ import {
   exists,
   extractArchive,
   listDir,
+  putBytes,
   putDir,
   putFile,
   readBytes,
   readText,
+  zipBytes,
   zipEntries
 } from './helpers';
 
@@ -333,5 +335,63 @@ test.describe('DEF-EXTR-10-NAMECLASH', () => {
       'x content'
     );
     expect(await readText(request, `${tmpPath}/x.txt`)).toBe('x content');
+  });
+});
+
+test.describe('DEF-EXTR-12-FILEFOLDER', () => {
+  test('in-place extract lands in the stem folder when an archive folder name is an existing file', async ({
+    request,
+    tmpPath
+  }) => {
+    await putFile(request, `${tmpPath}/a`, 'mine');
+    await putBytes(
+      request,
+      `${tmpPath}/t.zip`,
+      zipBytes([
+        ['c.txt', 'c'],
+        ['a/b.txt', 'b']
+      ])
+    );
+
+    const r = await callApi(request, 'unzip', {
+      archive_path: `${tmpPath}/t.zip`,
+      extract_to_named_folder: false
+    });
+
+    expect(r.status).toBe(200);
+    expect(r.body.extract_path).toBe(`${tmpPath}/t`);
+    expect(await readText(request, `${tmpPath}/t/a/b.txt`)).toBe('b');
+    expect(await readText(request, `${tmpPath}/a`)).toBe('mine');
+    // nothing was written beside the existing file
+    expect((await listDir(request, tmpPath))!.sort()).toEqual([
+      'a',
+      't',
+      't.zip'
+    ]);
+  });
+});
+
+test.describe('DEF-ARCH-19-SELFZIP', () => {
+  test('zip refuses a selection that holds the archive it would write', async ({
+    request,
+    tmpPath
+  }) => {
+    await putFile(request, `${tmpPath}/x.txt`, 'x');
+    const first = await callApi(request, 'zip', {
+      archive_name: 'archive.zip',
+      paths: [`${tmpPath}/x.txt`]
+    });
+    expect(first.status).toBe(200);
+    const before = (await readBytes(request, `${tmpPath}/archive.zip`))!;
+
+    const second = await callApi(request, 'zip', {
+      archive_name: 'archive.zip',
+      paths: [`${tmpPath}/x.txt`, `${tmpPath}/archive.zip`],
+      overwrite: true
+    });
+
+    expect(second.status).toBe(400);
+    const after = (await readBytes(request, `${tmpPath}/archive.zip`))!;
+    expect(after.equals(before)).toBe(true);
   });
 });

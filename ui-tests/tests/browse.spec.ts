@@ -439,10 +439,11 @@ test.describe('Archive browsing', () => {
         command
       );
 
-    // Paste into the archive: JupyterLab's own copy between drives throws
+    // Paste into the archive: JupyterLab's own copy between drives is refused with a dialog
     await selectAndPress(page, ['outside.txt'], 'Control+c');
     await open(page, 'a.zip', archive);
     await selectAndPress(page, ['top.txt'], 'Control+v');
+    await dismissError(page, 'Paste Error');
 
     // Paste inside the archive and duplicate reach the drive's copy
     await selectAndPress(page, ['top.txt'], 'Control+c');

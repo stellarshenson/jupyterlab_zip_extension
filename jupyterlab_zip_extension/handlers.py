@@ -55,6 +55,18 @@ def _free_folder(parent, stem, first_is_stem):
         n += 1
 
 
+def _clashes(extract_dir, names):
+    """Whether extracting names into extract_dir would overwrite a file, or need a folder where a file is."""
+    for n in names:
+        parts = [p for p in n.split('/') if p]
+        if any(os.path.isfile(os.path.join(extract_dir, *parts[:i])) for i in range(1, len(parts))):
+            return True
+        full = os.path.join(extract_dir, *parts)
+        if os.path.isfile(full) if n.endswith('/') else os.path.exists(full):
+            return True
+    return False
+
+
 def _unzip(handler, input_data):
     archive_path = input_data.get('archive_path')
     extract_to_named_folder = input_data.get('extract_to_named_folder', True)
@@ -77,10 +89,7 @@ def _unzip(handler, input_data):
     with zipfile.ZipFile(full_archive_path, 'r') as zip_ref:
         names = zip_ref.namelist()
         # Never overwrite: a planned target that is a file, or that already holds a member, is replaced by a new folder
-        if os.path.exists(extract_dir) and (
-            not os.path.isdir(extract_dir)
-            or any(not n.endswith('/') and os.path.exists(os.path.join(extract_dir, n)) for n in names)
-        ):
+        if os.path.exists(extract_dir) and (not os.path.isdir(extract_dir) or _clashes(extract_dir, names)):
             extract_dir = _free_folder(archive_dir, stem, not extract_to_named_folder)
         zip_ref.extractall(extract_dir)
         count = sum(1 for n in names if not n.endswith('/'))
@@ -108,9 +117,12 @@ def _zip(handler, input_data):
 
     # Archive goes into the first selected item's parent directory
     archive_path = os.path.join(os.path.dirname(_under_root(root_dir, paths[0])), archive_name)
+    full_paths = [_under_root(root_dir, p) for p in paths]
+    # An archive written into itself reads its own growing output and fills the disk
+    if archive_path in full_paths:
+        raise tornado.web.HTTPError(400, "The selection holds the archive itself; give the archive another name")
     if os.path.exists(archive_path) and input_data.get('overwrite') is not True:
         return 409, {"success": False, "error": f"Archive {archive_name} already exists"}
-    full_paths = [_under_root(root_dir, p) for p in paths]
 
     file_count = 0
     with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -239,7 +251,8 @@ def _browse(root_dir, path, content, want_type, want_format, allow_hidden=True):
             raise tornado.web.HTTPError(
                 400, f"The member is over {MAX_OPEN_SIZE >> 20} MB; copy it out of the archive to open it")
         with _open(zf, members[inner]) as src:
-            data = src.read()
+            # A sized read bounds the decompression by the size the header claims, which the limit above has checked
+            data = src.read(members[inner].file_size + 1)
     if want_type == 'notebook' or (want_type is None and model["type"] == 'notebook'):
         try:
             model.update(type='notebook', format='json', content=json.loads(data))
