@@ -172,6 +172,14 @@ What happens when an archive is extracted
   - root-cause: 2026-10-23T08:46:43Z @kj the clash test in _unzip checks only exact member paths with os.path.exists, so a member whose parent folder path is an existing file passes it and ZipFile.extractall fails mid-way
   - log: 2026-10-23T08:46:43Z @kj added
   - log: 2026-11-13T07:05:56Z @kj closed
+- [x] `DEF-EXTR-21-BARE-NAME` **File named zip offered Extract Archive** - MINOR; isArchiveFile compared the text after the last dot, so a file named zip with no extension counted as an archive and Extract Archive showed on it
+  - test-tags: UNIT
+  - evidence: isArchiveFile uses endsWith('.zip'); Jest src/__tests__/index.spec.ts 'is true for a name ending .zip in any letter case, false otherwise' passes
+  - repro: select a file named zip in the file browser, open the context menu
+  - root-cause: 2026-11-13T09:17:35Z @kj split('.').pop() returns the whole name when it holds no dot
+  - log: 2026-11-13T09:17:35Z @kj added
+  - log: 2026-11-13T09:17:35Z @kj closed
+  - log: 2026-11-13T09:17:42Z @kj edited test-tags added "UNIT"
 
 ## Archive browsing `BROWSE`
 

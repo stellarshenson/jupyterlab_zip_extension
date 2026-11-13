@@ -172,11 +172,13 @@ Extract Archive command on a selected zip
 
 Zip Extension settings
 
-- [ ] `ACC-SETT-16-SCHEMA` **extractToNamedFolder setting** - HIGH; setting extractToNamedFolder is a boolean, default true, no other keys allowed
+- [x] `ACC-SETT-16-SCHEMA` **extractToNamedFolder setting** - HIGH; setting extractToNamedFolder is a boolean, default true, no other keys allowed
+  - evidence: Jest src/__tests__/settings.spec.ts 'declares extractToNamedFolder as a boolean, default true, and no other key' passes
   - test: src/__tests__/settings.spec.ts: assert schema/plugin.json type, default and additionalProperties false
   - test-tags: UNIT
   - log: 2026-10-23T06:20:09Z @kj added
   - log: 2026-10-23T06:20:24Z @kj edited test "assert schema/plugin.json type, default and additionalProperties false" -> "src/__tests__/settings.spec.ts: assert schema/plugin.json type, default and additionalProperties false"
+  - log: 2026-11-13T09:17:36Z @kj closed
 - [x] `ACC-SETT-17-LIVE` **Setting applies without reload** - HIGH; changing extractToNamedFolder takes effect on the next extract with no page reload
   - evidence: Galata test 'applies a changed extractToNamedFolder to the next extract without reload' passed in logs/galata-verify-4.log (47 passed, 0 failed) against 1.2.12
   - test: ui-tests/tests/settings.spec.ts: applies a changed extractToNamedFolder to the next extract without reload
@@ -223,11 +225,14 @@ File-browser menu, palette, icon and console output
   - log: 2026-10-23T06:20:26Z @kj edited test "capture console during page load, assert the message" -> "ui-tests/tests/interface.spec.ts: capture console during page load, assert the message"
   - log: 2026-10-23T06:38:22Z @kj edited test "ui-tests/tests/interface.spec.ts: capture console during page load, assert the message" -> "ui-tests/tests/jupyterlab_zip_extension.spec.ts: should emit an activation console message"
   - log: 2026-10-23T08:44:27Z @kj closed
-- [ ] `ACC-FACE-22-ISARCH` **Zip name check** - MEDIUM; isArchiveFile is true for names ending .zip in any letter case, false otherwise
+- [x] `ACC-FACE-22-ISARCH` **Zip name check** - MEDIUM; isArchiveFile is true for names ending .zip in any letter case, false otherwise
+  - related: DEF-EXTR-21-BARE-NAME
+  - evidence: Jest src/__tests__/index.spec.ts 'is true for a name ending .zip in any letter case, false otherwise' passes: a.zip, A.ZIP true; a.txt, zip false
   - test: src/__tests__/index.spec.ts: a.zip, A.ZIP true; a.txt, zip false
   - test-tags: UNIT
   - log: 2026-10-23T06:20:09Z @kj added
   - log: 2026-10-23T06:20:25Z @kj edited test "Jest: a.zip, A.ZIP true; a.txt, zip false" -> "src/__tests__/index.spec.ts: a.zip, A.ZIP true; a.txt, zip false"
+  - log: 2026-11-13T09:17:36Z @kj closed
 
 ## Server API `SERV`
 

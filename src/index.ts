@@ -350,9 +350,8 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-function isArchiveFile(filename: string): boolean {
-  const ext = filename.toLowerCase().split('.').pop();
-  return ext === 'zip';
+export function isArchiveFile(filename: string): boolean {
+  return filename.toLowerCase().endsWith('.zip');
 }
 
 export default plugin;
