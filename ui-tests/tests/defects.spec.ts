@@ -223,9 +223,11 @@ test.describe('DEF-FEED-5-SILENT', () => {
     await extractArchive(page, 'fake.zip');
 
     // The extension's error dialog names the failure
-    await expect(
-      page.locator('.jp-Dialog', { hasText: 'Extract Archive failed' })
-    ).toBeVisible({ timeout: SERVER_TIMEOUT });
+    const dialog = page.locator('.jp-Dialog', {
+      hasText: 'Extract Archive failed'
+    });
+    await expect(dialog).toBeVisible({ timeout: SERVER_TIMEOUT });
+    await expect(dialog).not.toContainText('[object Object]');
   });
 });
 

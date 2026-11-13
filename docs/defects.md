@@ -85,6 +85,13 @@ What the user sees after a failed operation
   - log: 2026-10-23T06:52:26Z @kj needs rebuild: showErrorMessage added in 1.2.10 but the dialog never shows, because Dialog.dispose rejects the spinner's launch promise and the queued error dialog waits on it; src/index.ts now disposes the spinner before showErrorMessage, not built; defect test still fails on 1.2.10
   - log: 2026-10-23T08:09:46Z @kj fixed in source, verified on 1.2.11: galata 42 of 42 green (logs/galata-after-fix2-rerun2.log); spinner disposed before the error dialog
   - log: 2026-10-23T08:44:28Z @kj closed
+- [x] `DEF-FEED-20-OBJTEXT` **Failed operation shows [object Object]** - MEDIUM; a failed Extract Archive or Create Archive shows 'Error: [object Object]' in the error dialog instead of the server's reason; src/handler.ts
+  - evidence: Galata defects.spec.ts 'DEF-FEED-5-SILENT a failed extract tells the user' asserts the dialog holds no '[object Object]'; build_test.py passed at 1.2.27, Galata 79
+  - repro: upload a text file named fake.zip, Extract Archive on it, read the dialog body
+  - test-tags: E2E
+  - root-cause: 2026-11-13T07:20:41Z @kj callZipAPI built the ResponseError message from data.message, but the zip handlers answer {success, error}, so the whole object became the message
+  - log: 2026-11-13T07:20:41Z @kj added
+  - log: 2026-11-13T07:26:08Z @kj closed
 
 ## Archive content `ARCH`
 
