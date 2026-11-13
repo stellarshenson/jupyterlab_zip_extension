@@ -2,6 +2,14 @@
 
 <!-- <START NEW CHANGELOG ENTRY> -->
 
+## [1.2.29] - 2026-11-13
+
+### Fixed
+
+- Do not treat a file named zip as an archive
+- Show the server's reason when extract or create fails
+- Refuse an archive that holds itself, keep in-place extract whole, bound member reads
+
 ## [1.2.24] - 2026-10-31
 
 ### Fixed
